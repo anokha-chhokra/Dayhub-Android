@@ -12,6 +12,7 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         content = EdgeToEdgeShell.install(this);
+        content.addView(new ShellScreen(this));
     }
 
     /** The root container that screens are added to. */
