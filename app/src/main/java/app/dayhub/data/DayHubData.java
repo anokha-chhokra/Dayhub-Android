@@ -39,15 +39,17 @@ public final class DayHubData {
     private final DataStore file; // null keeps everything in memory (tests)
     private State state;
     private boolean dirty;
+    private String lastRaw; // exactly what is saved right now; null when nothing is
 
-    private DayHubData(DataStore file, State state) {
+    private DayHubData(DataStore file, State state, String lastRaw) {
         this.file = file;
         this.state = state;
+        this.lastRaw = lastRaw;
     }
 
     /** An engine with nothing saved anywhere. */
     public static DayHubData inMemory() {
-        return new DayHubData(null, new State());
+        return new DayHubData(null, new State(), null);
     }
 
     /**
@@ -55,7 +57,16 @@ public final class DayHubData {
      * be used; the file is left exactly as it was.
      */
     public static DayHubData open(DataStore file) throws IOException, DamagedDataException {
-        return new DayHubData(file, load(file.read()));
+        String raw = file.read();
+        return new DayHubData(file, load(raw), raw);
+    }
+
+    /**
+     * An empty engine that saves to {@code file}, for when the saved data is unusable and the
+     * person chose to carry on without it. Call only after the old file has been moved aside.
+     */
+    public static DayHubData startFresh(DataStore file) {
+        return new DayHubData(file, new State(), null);
     }
 
     static State load(String raw) throws DamagedDataException {
@@ -91,15 +102,34 @@ public final class DayHubData {
         return dirty;
     }
 
-    /** Saves if anything changed. The write is atomic (see {@link DataStore}). */
-    public void commit() throws IOException {
+    /**
+     * Saves if anything changed. The write is atomic (see {@link DataStore}). If it fails, every
+     * change since the last save is undone, so memory always matches what is on disk, and a 507
+     * {@link DataError} is thrown.
+     */
+    public void commit() {
         if (!dirty) return;
-        if (file != null) {
-            try {
-                file.write(DocumentCodec.write(state).toString());
-            } catch (JSONException e) {
-                throw new IOException("Could not write the data: " + e.getMessage(), e);
-            }
+        String text;
+        try {
+            text = DocumentCodec.write(state).toString();
+            if (file != null) file.write(text);
+        } catch (IOException | JSONException | RuntimeException e) {
+            rollback();
+            throw DataError.notSaved(e);
+        }
+        lastRaw = text;
+        dirty = false;
+    }
+
+    /**
+     * Forgets everything done since the last save, including the id counters, so a half-finished
+     * operation leaves no trace.
+     */
+    public void rollback() {
+        try {
+            state = load(lastRaw);
+        } catch (DamagedDataException e) {
+            // lastRaw was read or written by this engine, so this cannot happen; keep going as is.
         }
         dirty = false;
     }

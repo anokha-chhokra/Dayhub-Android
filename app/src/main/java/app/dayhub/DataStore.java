@@ -61,6 +61,22 @@ public final class DataStore {
     }
 
     /**
+     * Renames the saved document to {@code newName} in the same folder, so it is kept but no longer
+     * loaded. Returns where it went, or null if nothing was saved.
+     */
+    public synchronized File moveAside(String newName) throws IOException {
+        if (!file.isFile()) return null;
+        File target = new File(file.getParentFile(), newName);
+        Files.move(file.toPath(), target.toPath(), StandardCopyOption.ATOMIC_MOVE);
+        return target;
+    }
+
+    /** Puts a document moved aside back as the saved document, replacing whatever is saved now. */
+    public synchronized void moveBack(File aside) throws IOException {
+        Files.move(aside.toPath(), file.toPath(), StandardCopyOption.ATOMIC_MOVE);
+    }
+
+    /**
      * The saved document, or an empty object on first run.
      * Throws {@link JSONException} if the file exists but is not valid JSON (damaged data).
      */
