@@ -26,25 +26,24 @@ public final class EdgeToEdgeShell {
         FrameLayout content = new FrameLayout(activity);
         content.setBackgroundResource(R.color.paper);
         content.setOnApplyWindowInsetsListener((v, insets) -> {
-            int left, top, right, bottom;
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                Insets bars = insets.getInsets(
-                        WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout());
-                left = bars.left;
-                top = bars.top;
-                right = bars.right;
-                bottom = bars.bottom;
-            } else {
-                left = insets.getSystemWindowInsetLeft();
-                top = insets.getSystemWindowInsetTop();
-                right = insets.getSystemWindowInsetRight();
-                bottom = insets.getSystemWindowInsetBottom();
-            }
-            v.setPadding(left, top, right, bottom);
+            int[] in = insetsOf(insets);
+            v.setPadding(in[0], in[1], in[2], in[3]);
             return insets;
         });
         activity.setContentView(content);
         return content;
+    }
+
+    /** The system bar and display cutout insets as {left, top, right, bottom} in pixels. */
+    public static int[] insetsOf(WindowInsets insets) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            Insets bars = insets.getInsets(
+                    WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout());
+            return new int[] {bars.left, bars.top, bars.right, bars.bottom};
+        }
+        return new int[] {
+                insets.getSystemWindowInsetLeft(), insets.getSystemWindowInsetTop(),
+                insets.getSystemWindowInsetRight(), insets.getSystemWindowInsetBottom()};
     }
 
     private static void goEdgeToEdge(Window window) {

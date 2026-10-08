@@ -5,7 +5,7 @@ A native, offline Java app: no WebView, no network, no INTERNET permission. Tick
 ## App shell
 - [x] 1. Single full-screen activity (edge-to-edge, portrait only, no WebView, no network)
 - [x] 2. Cream-paper hand-drawn look: custom views, hand-drawn card, button, field and tab shapes, handwriting font, bottom nav bar
-- [ ] 3. Bottom sheets, date and time pickers, toasts with Undo, back-button handling
+- [x] 3. Bottom sheets, date and time pickers, toasts with Undo, back-button handling
 
 ## Data and storage
 - [ ] 4. Local data store: one JSON document in private app storage, saved atomically
