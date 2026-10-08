@@ -3,7 +3,7 @@
 A native, offline Java app: no WebView, no network, no INTERNET permission. Tick items off as they are built.
 
 ## App shell
-- [ ] 1. Single full-screen activity (edge-to-edge, portrait only, no WebView, no network)
+- [x] 1. Single full-screen activity (edge-to-edge, portrait only, no WebView, no network)
 - [ ] 2. Cream-paper hand-drawn look: custom views, hand-drawn card, button, field and tab shapes, handwriting font, bottom nav bar
 - [ ] 3. Bottom sheets, date and time pickers, toasts with Undo, back-button handling
 
