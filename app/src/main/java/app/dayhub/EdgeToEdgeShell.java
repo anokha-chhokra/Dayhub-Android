@@ -34,11 +34,11 @@ public final class EdgeToEdgeShell {
         return content;
     }
 
-    /** The system bar and display cutout insets as {left, top, right, bottom} in pixels. */
+    /** The system bar, display cutout and on-screen keyboard insets as {left, top, right, bottom} in pixels. */
     public static int[] insetsOf(WindowInsets insets) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             Insets bars = insets.getInsets(
-                    WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout());
+                    WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout() | WindowInsets.Type.ime());
             return new int[] {bars.left, bars.top, bars.right, bars.bottom};
         }
         return new int[] {

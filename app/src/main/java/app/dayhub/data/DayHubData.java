@@ -172,6 +172,62 @@ public final class DayHubData {
         touch();
     }
 
+    /** True for a value JavaScript would call truthy: not null, false, 0 or an empty string. */
+    private static boolean truthy(Object v) {
+        if (missing(v) || Boolean.FALSE.equals(v) || "".equals(v)) return false;
+        return !(v instanceof Number && ((Number) v).doubleValue() == 0);
+    }
+
+    /**
+     * The first-run setup, all in one go so a half-finished setup never sticks: every answer is
+     * checked first, and if any is wrong nothing is saved. The body may hold name, currency,
+     * monthlyBudget, musicUrl, habits (a list of {@link HabitPresets} ids) and today.
+     */
+    public Settings setup(JSONObject b) {
+        String name = Validate.optStr(b.opt("name"), "name", 40);
+        String currency = b.has("currency") ? Validate.currency(b.opt("currency")) : null;
+        Object budget = b.opt("monthlyBudget");
+        Long budgetMinor = missing(budget) || "".equals(budget)
+                ? null : Long.valueOf(Validate.moneyToMinor(budget, "monthly budget", true));
+        MusicLinkParser.Parsed music = truthy(b.opt("musicUrl")) ? MusicLinkParser.parse(b.opt("musicUrl")) : null;
+        List<HabitPresets.Preset> presets = new ArrayList<>();
+        if (b.opt("habits") instanceof org.json.JSONArray) {
+            org.json.JSONArray ids = (org.json.JSONArray) b.opt("habits");
+            for (int i = 0; i < ids.length(); i++) {
+                HabitPresets.Preset p = HabitPresets.byId(ids.opt(i));
+                if (p == null) throw bad("Unknown habit \"" + ids.opt(i) + "\"");
+                presets.add(p);
+            }
+        }
+        String today = Validate.todayOf(b.opt("today"));
+
+        // Everything is valid: now change things.
+        Settings s = state.settings;
+        s.setupDone = true;
+        s.name = name == null ? "" : name;
+        if (currency != null) s.currency = currency;
+        if (budgetMinor != null) s.monthlyBudgetMinor = budgetMinor;
+        for (HabitPresets.Preset p : presets) {
+            Habit h = new Habit();
+            h.id = ++state.seqHabits;
+            h.title = p.title;
+            h.icon = p.icon;
+            h.kind = p.kind;
+            h.unit = p.unit;
+            h.target = p.target;
+            h.step = p.step;
+            h.points = p.points;
+            h.days = new ArrayList<>(java.util.Arrays.asList(0, 1, 2, 3, 4, 5, 6));
+            h.remindAt = null;
+            h.archived = false;
+            h.createdOn = today;
+            state.habits.add(h);
+        }
+        touch();
+        if (music != null) addMusic(music.url, music.defaultLabel, true);
+        return s.copy();
+    }
+
     // ---------- tasks ----------
 
     private static int byDue(Task a, Task b) {

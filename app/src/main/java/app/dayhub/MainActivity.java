@@ -7,6 +7,8 @@ import android.widget.FrameLayout;
 
 import app.dayhub.data.DayHubData;
 
+import java.util.function.BooleanSupplier;
+
 /** The only activity in the app. Each feature lives in its own class and is hooked in here. */
 public class MainActivity extends Activity {
     private FrameLayout content;
@@ -14,6 +16,7 @@ public class MainActivity extends Activity {
     private ActivityResults results;
     private ShellScreen shell;
     private DayHubData data;
+    private BooleanSupplier backHandler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -24,8 +27,12 @@ public class MainActivity extends Activity {
         // Open the saved data; if it is unusable the damaged-data screen is shown instead.
         DataGate.open(this, content, overlays, results, opened -> {
             data = opened;
-            shell = new ShellScreen(this, overlays, new DataTransfer(this, overlays, results, opened));
-            content.addView(shell);
+            DataTransfer transfer = new DataTransfer(this, overlays, results, opened);
+            // First run: ask a few questions before showing the app.
+            SetupWizard.showIfNeeded(this, content, transfer, opened, () -> {
+                shell = new ShellScreen(this, overlays, transfer);
+                content.addView(shell);
+            });
         });
     }
 
@@ -47,10 +54,17 @@ public class MainActivity extends Activity {
         }
     }
 
-    /** Back closes an open sheet first, then returns to Home, and only then leaves the app. */
+    /** A screen that wants the back button for itself (e.g. a wizard going to its previous step); null clears it. */
+    public void setBackHandler(BooleanSupplier handler) {
+        backHandler = handler;
+    }
+
+    /** Back closes an open sheet first, then a screen's own step, then returns to Home, and only then leaves the app. */
     @Override
     @SuppressWarnings("deprecation")
     public void onBackPressed() {
-        if (!overlays.handleBack() && !(shell != null && shell.handleBack())) super.onBackPressed();
+        if (overlays.handleBack()) return;
+        if (backHandler != null && backHandler.getAsBoolean()) return;
+        if (!(shell != null && shell.handleBack())) super.onBackPressed();
     }
 }
