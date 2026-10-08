@@ -19,13 +19,15 @@ public final class ShellScreen extends LinearLayout {
     private static final String[] TABS = {"Home", "Tasks", "Habits", "Journal", "Spend"};
 
     private final Overlays overlays;
+    private final DataTransfer transfer;
     private final FrameLayout pageHost;
     private final BottomNavBar nav;
     private int currentTab;
 
-    public ShellScreen(Context c, Overlays overlays) {
+    public ShellScreen(Context c, Overlays overlays, DataTransfer transfer) {
         super(c);
         this.overlays = overlays;
+        this.transfer = transfer;
         setOrientation(VERTICAL);
 
         pageHost = new FrameLayout(c);
@@ -48,6 +50,11 @@ public final class ShellScreen extends LinearLayout {
         return true;
     }
 
+    /** Redraws the page being shown, e.g. after the data was replaced by a restore. */
+    public void refresh() {
+        showPage(currentTab);
+    }
+
     private void showPage(int index) {
         currentTab = index;
         pageHost.removeAllViews();
@@ -63,6 +70,7 @@ public final class ShellScreen extends LinearLayout {
 
         column.addView(Sketch.label(c, TABS[index], 32, true, R.color.ink));
         column.addView(card(index), cardParams());
+        if (index == 0 && transfer != null) column.addView(dataCard(), cardParams());
 
         ScrollView scroll = new ScrollView(c);
         scroll.setFillViewport(true);
@@ -114,6 +122,27 @@ public final class ShellScreen extends LinearLayout {
         time.setOnClickListener(v -> DateTimePickers.pickTime(overlays, c, LocalTime.now(),
                 t -> overlays.toast(t.format(DateTimeFormatter.ofPattern("HH:mm")))));
         card.addView(buttonRow(c, date, time), rowParams(c));
+        return card;
+    }
+
+    /** Export and restore, until the Settings screen takes these over. */
+    private View dataCard() {
+        Context c = getContext();
+        HandDrawnCard card = new HandDrawnCard(c);
+        card.addView(Sketch.label(c, "Your data", 22, true, R.color.ink));
+        card.addView(Sketch.label(c, "Save a copy, or restore one.", 16, false, R.color.muted));
+
+        HandDrawnButton backup = new HandDrawnButton(c, "Backup", true);
+        backup.setOnClickListener(v -> transfer.exportBackup());
+        HandDrawnButton restore = new HandDrawnButton(c, "Restore\u2026", false);
+        restore.setOnClickListener(v -> transfer.restoreFromFile(this::refresh));
+        card.addView(buttonRow(c, backup, restore), rowParams(c));
+
+        HandDrawnButton csv = new HandDrawnButton(c, "Expenses CSV", false);
+        csv.setOnClickListener(v -> transfer.exportExpenses(null));
+        HandDrawnButton journal = new HandDrawnButton(c, "Journal", false);
+        journal.setOnClickListener(v -> transfer.exportJournal());
+        card.addView(buttonRow(c, csv, journal), rowParams(c));
         return card;
     }
 

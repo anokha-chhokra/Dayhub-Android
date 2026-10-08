@@ -13,7 +13,6 @@ import app.dayhub.data.Model.State;
 import app.dayhub.data.Model.Task;
 
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.time.Instant;
@@ -326,100 +325,142 @@ public final class DocumentCodec {
     }
 
     // ---------- writing ----------
+    //
+    // Documents are built as ordered maps, so the text comes out in the same key order as the web
+    // app's no matter which JSON library is underneath.
 
-    private static Object nz(Object v) {
-        return v == null ? JSONObject.NULL : v;
+    private static Map<String, Object> tree(Task t) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("id", t.id);
+        m.put("title", t.title);
+        m.put("dueOn", t.dueOn);
+        m.put("priority", t.priority);
+        m.put("done", t.done);
+        m.put("doneOn", t.doneOn);
+        m.put("doneTime", t.doneTime);
+        m.put("createdAt", t.createdAt);
+        return m;
     }
 
-    private static JSONObject json(Task t) throws JSONException {
-        return new JSONObject().put("id", t.id).put("title", t.title).put("dueOn", nz(t.dueOn))
-                .put("priority", t.priority).put("done", t.done).put("doneOn", nz(t.doneOn))
-                .put("doneTime", nz(t.doneTime)).put("createdAt", t.createdAt);
+    private static Map<String, Object> tree(Expense e) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("id", e.id);
+        m.put("amountMinor", e.amountMinor);
+        m.put("category", e.category);
+        m.put("note", e.note);
+        m.put("spentOn", e.spentOn);
+        m.put("entryId", e.entryId);
+        m.put("time", e.time);
+        return m;
     }
 
-    private static JSONObject json(Expense e) throws JSONException {
-        return new JSONObject().put("id", e.id).put("amountMinor", e.amountMinor).put("category", e.category)
-                .put("note", nz(e.note)).put("spentOn", e.spentOn).put("entryId", nz(e.entryId))
-                .put("time", nz(e.time));
+    private static Map<String, Object> tree(Habit h) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("id", h.id);
+        m.put("title", h.title);
+        m.put("icon", h.icon);
+        m.put("kind", h.kind);
+        m.put("unit", h.unit);
+        m.put("target", h.target);
+        m.put("step", h.step);
+        m.put("points", h.points);
+        m.put("days", new ArrayList<>(h.days));
+        m.put("remindAt", h.remindAt);
+        m.put("archived", h.archived);
+        m.put("createdOn", h.createdOn);
+        return m;
     }
 
-    private static JSONObject json(Habit h) throws JSONException {
-        return new JSONObject().put("id", h.id).put("title", h.title).put("icon", h.icon).put("kind", h.kind)
-                .put("unit", h.unit).put("target", h.target).put("step", h.step).put("points", h.points)
-                .put("days", new JSONArray(h.days)).put("remindAt", nz(h.remindAt))
-                .put("archived", h.archived).put("createdOn", h.createdOn);
+    private static Map<String, Object> tree(HabitLog l) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("habitId", l.habitId);
+        m.put("day", l.day);
+        m.put("value", l.value);
+        m.put("time", l.time);
+        return m;
     }
 
-    private static JSONObject json(HabitLog l) throws JSONException {
-        return new JSONObject().put("habitId", l.habitId).put("day", l.day).put("value", l.value)
-                .put("time", nz(l.time));
+    private static Map<String, Object> tree(Entry e) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("id", e.id);
+        m.put("day", e.day);
+        m.put("time", e.time);
+        m.put("text", e.text);
+        m.put("mood", e.mood);
+        m.put("tags", new ArrayList<>(e.tags));
+        m.put("promptId", e.promptId);
+        m.put("wordCount", e.wordCount);
+        m.put("createdAt", e.createdAt);
+        m.put("updatedAt", e.updatedAt);
+        return m;
     }
 
-    private static JSONObject json(Entry e) throws JSONException {
-        return new JSONObject().put("id", e.id).put("day", e.day).put("time", nz(e.time)).put("text", e.text)
-                .put("mood", nz(e.mood)).put("tags", new JSONArray(e.tags)).put("promptId", nz(e.promptId))
-                .put("wordCount", e.wordCount).put("createdAt", e.createdAt).put("updatedAt", e.updatedAt);
-    }
-
-    private static JSONObject json(Music m) throws JSONException {
-        return new JSONObject().put("id", m.id).put("provider", m.provider).put("kind", m.kind)
-                .put("url", m.url).put("embedUrl", m.embedUrl).put("label", m.label);
-    }
-
-    public static JSONObject json(Settings s) throws JSONException {
-        return new JSONObject().put("name", s.name).put("currency", s.currency)
-                .put("monthlyBudgetMinor", s.monthlyBudgetMinor).put("setupDone", s.setupDone)
-                .put("currentMusicId", nz(s.currentMusicId)).put("notifications", s.notifications)
-                .put("journalReminder", s.journalReminder);
-    }
-
-    private static <T> JSONArray array(List<T> list, JsonRow<T> row) throws JSONException {
-        JSONArray out = new JSONArray();
-        for (T item : list) out.put(row.json(item));
+    private static Map<String, Object> tree(Music m) {
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("id", m.id);
+        out.put("provider", m.provider);
+        out.put("kind", m.kind);
+        out.put("url", m.url);
+        out.put("embedUrl", m.embedUrl);
+        out.put("label", m.label);
         return out;
     }
 
-    private interface JsonRow<T> {
-        JSONObject json(T row) throws JSONException;
+    private static Map<String, Object> tree(Settings s) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("name", s.name);
+        m.put("currency", s.currency);
+        m.put("monthlyBudgetMinor", s.monthlyBudgetMinor);
+        m.put("setupDone", s.setupDone);
+        m.put("currentMusicId", s.currentMusicId);
+        m.put("notifications", s.notifications);
+        m.put("journalReminder", s.journalReminder);
+        return m;
     }
 
-    private static JSONObject tables(State s) throws JSONException {
-        JSONObject badges = new JSONObject();
-        for (Map.Entry<String, String> b : s.badges.entrySet()) badges.put(b.getKey(), b.getValue());
-        return new JSONObject()
-                .put("settings", json(s.settings))
-                .put("tasks", array(s.tasks, DocumentCodec::json))
-                .put("expenses", array(s.expenses, DocumentCodec::json))
-                .put("habits", array(s.habits, DocumentCodec::json))
-                .put("habitLogs", array(s.habitLogs, DocumentCodec::json))
-                .put("journal", array(s.journal, DocumentCodec::json))
-                .put("badges", badges)
-                .put("music", array(s.music, DocumentCodec::json));
+    private static <T> List<Object> rows(List<T> list, Function<T, Map<String, Object>> row) {
+        List<Object> out = new ArrayList<>(list.size());
+        for (T item : list) out.add(row.apply(item));
+        return out;
     }
 
-    /** The document saved in app storage: every table plus the id counters. */
-    public static JSONObject write(State s) throws JSONException {
-        JSONObject doc = new JSONObject().put("v", FORMAT);
-        JSONObject t = tables(s);
-        Iterator<String> keys = t.keys();
-        while (keys.hasNext()) {
-            String k = keys.next();
-            doc.put(k, t.get(k));
-        }
-        return doc.put("seq", new JSONObject().put("tasks", s.seqTasks).put("expenses", s.seqExpenses)
-                .put("habits", s.seqHabits).put("journal", s.seqJournal).put("music", s.seqMusic));
+    private static void putTables(Map<String, Object> doc, State s) {
+        doc.put("settings", tree(s.settings));
+        doc.put("tasks", rows(s.tasks, DocumentCodec::tree));
+        doc.put("expenses", rows(s.expenses, DocumentCodec::tree));
+        doc.put("habits", rows(s.habits, DocumentCodec::tree));
+        doc.put("habitLogs", rows(s.habitLogs, DocumentCodec::tree));
+        doc.put("journal", rows(s.journal, DocumentCodec::tree));
+        doc.put("badges", new LinkedHashMap<>(s.badges));
+        doc.put("music", rows(s.music, DocumentCodec::tree));
     }
 
-    /** A backup file: the tables (already in display order) with an export time, no counters. */
-    public static JSONObject export(State ordered) throws JSONException {
-        JSONObject doc = new JSONObject().put("exportedAt", nowIso());
-        JSONObject t = tables(ordered);
-        Iterator<String> keys = t.keys();
-        while (keys.hasNext()) {
-            String k = keys.next();
-            doc.put(k, t.get(k));
-        }
+    /** The document saved in app storage: a version, every table, and the id counters. */
+    public static String write(State s) {
+        Map<String, Object> doc = new LinkedHashMap<>();
+        doc.put("v", FORMAT);
+        putTables(doc, s);
+        Map<String, Object> seq = new LinkedHashMap<>();
+        seq.put("tasks", s.seqTasks);
+        seq.put("expenses", s.seqExpenses);
+        seq.put("habits", s.seqHabits);
+        seq.put("journal", s.seqJournal);
+        seq.put("music", s.seqMusic);
+        doc.put("seq", seq);
+        return JsonText.compact(doc);
+    }
+
+    /** A backup file as an ordered tree: an export time, then the tables (already in display order). */
+    public static Map<String, Object> exportTree(State ordered) {
+        Map<String, Object> doc = new LinkedHashMap<>();
+        doc.put("exportedAt", nowIso());
+        putTables(doc, ordered);
         return doc;
+    }
+
+    /** A backup file as a JSONObject. Its key order depends on the JSON library; use {@link #exportTree} for text. */
+    public static JSONObject export(State ordered) {
+        return new JSONObject(exportTree(ordered));
     }
 
     /** How many rows of each kind a state holds, for the "restored" summary. */

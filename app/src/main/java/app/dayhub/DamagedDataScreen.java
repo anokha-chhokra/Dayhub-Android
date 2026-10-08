@@ -133,30 +133,9 @@ public final class DamagedDataScreen extends ScrollView {
     }
 
     private void confirmRestore(String backupText, String summary) {
-        LinearLayout body = new LinearLayout(activity);
-        body.setOrientation(LinearLayout.VERTICAL);
-        body.addView(Sketch.label(activity, "This backup has " + summary + ".", 16, false, R.color.ink));
-        body.addView(spaced(Sketch.label(activity,
+        RestoreConfirm.show(activity, overlays, summary,
                 "Restoring replaces everything now saved on this device. The unreadable copy is kept.",
-                15, false, R.color.red), 10));
-
-        BottomSheet[] sheet = new BottomSheet[1];
-        LinearLayout row = new LinearLayout(activity);
-        row.setOrientation(LinearLayout.HORIZONTAL);
-        HandDrawnButton replace = new HandDrawnButton(activity, "Replace my data", true);
-        replace.setOnClickListener(v -> {
-            sheet[0].dismiss();
-            restore(backupText);
-        });
-        HandDrawnButton cancel = new HandDrawnButton(activity, "Cancel", false);
-        cancel.setOnClickListener(v -> sheet[0].dismiss());
-        LinearLayout.LayoutParams gap = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        gap.rightMargin = Sketch.dp(activity, 12);
-        row.addView(replace, gap);
-        row.addView(cancel);
-        body.addView(row, rowParams(14));
-        sheet[0] = overlays.sheet("Restore from backup", body);
+                () -> restore(backupText));
     }
 
     private void restore(String backupText) {

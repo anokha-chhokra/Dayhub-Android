@@ -15,7 +15,7 @@ A native, offline Java app: no WebView, no network, no INTERNET permission. Tick
 - [x] 8. Expense detection from journal text (e.g. "Rs 200", "spent 200 on lunch")
 - [x] 9. Spend insights: budget pace and attention items
 - [x] 10. Timeline, calendar and stats
-- [ ] 11. Import and export of the data, plus CSV and Markdown export
+- [x] 11. Import and export of the data, plus CSV and Markdown export
 
 ## Screens
 - [ ] 12. First-run setup wizard

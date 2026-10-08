@@ -111,9 +111,9 @@ public final class DayHubData {
         if (!dirty) return;
         String text;
         try {
-            text = DocumentCodec.write(state).toString();
+            text = DocumentCodec.write(state);
             if (file != null) file.write(text);
-        } catch (IOException | JSONException | RuntimeException e) {
+        } catch (IOException | RuntimeException e) {
             rollback();
             throw DataError.notSaved(e);
         }
@@ -795,8 +795,8 @@ public final class DayHubData {
 
     // ---------- backup and restore ----------
 
-    /** Everything as a backup file in the web app's format, in display order. */
-    public JSONObject exportAll() throws JSONException {
+    /** Everything in display order (tasks by due date, newest first, ...), as the backup file lists it. */
+    State orderedState() {
         State o = new State();
         o.settings = state.settings.copy();
         o.tasks = allTasks();
@@ -808,7 +808,12 @@ public final class DayHubData {
         o.music = new ArrayList<>();
         for (Music m : state.music) o.music.add(m.copy());
         o.music.sort((a, b) -> Integer.compare(b.id, a.id));
-        return DocumentCodec.export(o);
+        return o;
+    }
+
+    /** Everything as a backup file in the web app's format, in display order. */
+    public JSONObject exportAll() {
+        return DocumentCodec.export(orderedState());
     }
 
     /**

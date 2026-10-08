@@ -24,7 +24,7 @@ public class MainActivity extends Activity {
         // Open the saved data; if it is unusable the damaged-data screen is shown instead.
         DataGate.open(this, content, overlays, results, opened -> {
             data = opened;
-            shell = new ShellScreen(this, overlays);
+            shell = new ShellScreen(this, overlays, new DataTransfer(this, overlays, results, opened));
             content.addView(shell);
         });
     }
