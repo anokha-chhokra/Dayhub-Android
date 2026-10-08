@@ -11,7 +11,7 @@ A native, offline Java app: no WebView, no network, no INTERNET permission. Tick
 - [x] 4. Local data store: one JSON document in private app storage, saved atomically
 - [x] 5. Data engine in Java matching the web app: tasks, habits, journal, expenses, music links, settings, with validation
 - [x] 6. Rollback when a save fails, and a "damaged data" screen with restore options
-- [ ] 7. Habit points, streaks and badges
+- [x] 7. Habit points, streaks and badges
 - [ ] 8. Expense detection from journal text (e.g. "Rs 200", "spent 200 on lunch")
 - [ ] 9. Spend insights: budget pace and attention items
 - [ ] 10. Timeline, calendar and stats
