@@ -354,6 +354,14 @@ public final class DayHubData {
         return out;
     }
 
+    /** The most recent expenses that have a note, newest first; used to learn what words mean. */
+    public List<Expense> recentExpensesWithNotes(int limit) {
+        List<Expense> out = new ArrayList<>();
+        for (Expense e : state.expenses) if (e.note != null && !e.note.isEmpty()) out.add(e.copy());
+        out.sort((a, b) -> Integer.compare(b.id, a.id));
+        return take(out, limit);
+    }
+
     public List<Expense> listEntryExpenses(int entryId) {
         List<Expense> out = new ArrayList<>();
         for (Expense e : state.expenses) if (e.entryId != null && e.entryId == entryId) out.add(e.copy());
@@ -576,11 +584,51 @@ public final class DayHubData {
         return out;
     }
 
+    /** Spending typed or confirmed alongside a journal entry, already validated. */
+    private static final class EntrySpend {
+        long amountMinor;
+        String category;
+        String note;
+        int daysAgo;
+    }
+
+    private static List<EntrySpend> entrySpending(Object list) {
+        List<EntrySpend> out = new ArrayList<>();
+        if (!(list instanceof org.json.JSONArray)) return out;
+        org.json.JSONArray inputs = (org.json.JSONArray) list;
+        if (inputs.length() > 5) throw bad("At most 5 expenses per entry");
+        for (int i = 0; i < inputs.length(); i++) {
+            Object raw = inputs.opt(i);
+            if (!(raw instanceof JSONObject)) throw bad("Expected a JSON object");
+            JSONObject o = (JSONObject) raw;
+            EntrySpend x = new EntrySpend();
+            x.amountMinor = Validate.moneyToMinor(o.opt("amount"), "amount");
+            x.category = Validate.oneOf(o.opt("category"), Model.CATEGORIES, "category", "Other");
+            x.note = Validate.optStr(o.opt("note"), "note", 120);
+            x.daysAgo = Validate.intIn(o.opt("daysAgo"), "daysAgo", 0, 30, 0);
+            out.add(x);
+        }
+        return out;
+    }
+
+    /** Saves spending with an entry, on the entry's day (or some days earlier, as written). */
+    private void saveEntrySpending(List<EntrySpend> spending, Entry entry) {
+        for (EntrySpend x : spending) {
+            createExpense(x.amountMinor, x.category, x.note,
+                    x.daysAgo > 0 ? Validate.addDays(entry.day, -x.daysAgo) : entry.day,
+                    entry.id, x.daysAgo > 0 ? null : entry.time);
+        }
+    }
+
     private static Integer moodOf(Object v) {
         return missing(v) || "".equals(v) ? null : Validate.intIn(v, "mood", 1, 5, null);
     }
 
-    /** Adds a journal entry from a body (text, mood, tags, day, time, promptId). */
+    /**
+     * Adds a journal entry from a body (text, mood, tags, day, time, promptId). An optional
+     * {@code expenses} list (amount, category, note, daysAgo; at most 5) is saved with it; read
+     * them back with {@link #listEntryExpenses}.
+     */
     public Entry createEntry(JSONObject b) {
         String today = Validate.todayOf(b.opt("today"));
         Object dayRaw = b.opt("day");
@@ -592,6 +640,7 @@ public final class DayHubData {
         Object prompt = b.opt("promptId");
         String promptId = missing(prompt) || "".equals(prompt)
                 ? null : Validate.oneOf(prompt, Model.PROMPT_IDS, "prompt", null);
+        List<EntrySpend> spending = entrySpending(b.opt("expenses"));
         noFuture(day, today, "write on");
         String time = Validate.hhmm(b.opt("time"));
         List<String> tags = Validate.tags(b.opt("tags"));
@@ -609,6 +658,7 @@ public final class DayHubData {
         e.updatedAt = e.createdAt;
         state.journal.add(e);
         touch();
+        saveEntrySpending(spending, e);
         return e.copy();
     }
 
@@ -637,6 +687,7 @@ public final class DayHubData {
         }
         if (b.has("time")) time = Validate.hhmm(b.opt("time"));
         if (text.isEmpty() && mood == null) throw bad("Write something or pick a mood");
+        List<EntrySpend> spending = entrySpending(b.opt("expenses"));
 
         String oldDay = row.day;
         String oldTime = row.time;
@@ -650,6 +701,7 @@ public final class DayHubData {
         touch();
         boolean sameTime = oldTime == null ? time == null : oldTime.equals(time);
         if (!day.equals(oldDay) || !sameTime) moveEntryExpenses(id, oldDay, day, time);
+        saveEntrySpending(spending, row);
         return row.copy();
     }
 

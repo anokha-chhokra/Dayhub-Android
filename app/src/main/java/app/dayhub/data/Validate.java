@@ -48,7 +48,7 @@ public final class Validate {
                 || c == ' ' || c == ' ' || c == ' ' || c == ' ' || c == '　';
     }
 
-    private static String trim(String s) {
+    static String trim(String s) {
         int a = 0;
         int b = s.length();
         while (a < b && isSpace(s.charAt(a))) a++;
