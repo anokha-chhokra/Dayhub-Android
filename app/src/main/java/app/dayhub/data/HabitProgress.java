@@ -68,6 +68,17 @@ public final class HabitProgress {
         }
     }
 
+    /** The Stats screen: the numbers and every badge with the day it was earned. */
+    public static final class StatsView {
+        public final HabitStats stats;
+        public final List<Badges.Status> badges;
+
+        StatsView(HabitStats stats, List<Badges.Status> badges) {
+            this.stats = stats;
+            this.badges = badges;
+        }
+    }
+
     private final DayHubData data;
 
     public HabitProgress(DayHubData data) {
@@ -94,6 +105,12 @@ public final class HabitProgress {
         List<Badges.Status> out = new ArrayList<>();
         for (Badge b : Badges.ALL) out.add(new Badges.Status(b, have.get(b.id)));
         return out;
+    }
+
+    /** Brings the badges up to date, then returns stats and badges for the Stats screen. */
+    public StatsView statsView(String today) {
+        Synced synced = syncBadges(today);
+        return new StatsView(synced.stats, badgeList());
     }
 
     private Map<Integer, Integer> valuesOn(String day) {
