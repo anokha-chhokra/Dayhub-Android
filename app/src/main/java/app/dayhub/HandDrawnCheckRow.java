@@ -13,6 +13,7 @@ public final class HandDrawnCheckRow extends LinearLayout {
 
     private final TextView box;
     private final TextView text;
+    private final LinearLayout column;
     private final TextView subtitle;
     private final HandDrawnDrawable off;
     private final HandDrawnDrawable on;
@@ -37,7 +38,7 @@ public final class HandDrawnCheckRow extends LinearLayout {
         box.setBackground(off);
         addView(box, new LayoutParams(Sketch.dp(c, 34), Sketch.dp(c, 34)));
 
-        LinearLayout column = new LinearLayout(c);
+        column = new LinearLayout(c);
         column.setOrientation(VERTICAL);
         text = Sketch.label(c, label, 17, false, R.color.ink);
         column.addView(text);
@@ -80,6 +81,12 @@ public final class HandDrawnCheckRow extends LinearLayout {
         subtitle.setText(s);
         subtitle.setTextColor(getContext().getColor(warn ? R.color.red : R.color.muted));
         subtitle.setVisibility(s == null || s.length() == 0 ? View.GONE : View.VISIBLE);
+        return this;
+    }
+
+    /** When set, tapping the label runs this instead of ticking; only the box ticks. */
+    public HandDrawnCheckRow onLabelClick(Runnable r) {
+        column.setOnClickListener(v -> r.run());
         return this;
     }
 

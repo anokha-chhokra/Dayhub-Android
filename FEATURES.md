@@ -20,7 +20,7 @@ A native, offline Java app: no WebView, no network, no INTERNET permission. Tick
 ## Screens
 - [x] 12. First-run setup wizard
 - [x] 13. Home dashboard: greeting, points and streak, needs-attention tiles, today's tasks, quick journal add, spend summary, music tile, focus tile
-- [ ] 14. Tasks: add and edit, due dates, priority, star, done, delete with Undo
+- [x] 14. Tasks: add and edit, due dates, priority, star, done, delete with Undo
 - [ ] 15. Habits: check, goal and limit habits, week view
 - [ ] 16. Journal: daily timeline entries with mood and tags
 - [ ] 17. Spend: expenses, categories, budget, month totals

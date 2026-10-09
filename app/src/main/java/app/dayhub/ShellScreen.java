@@ -24,7 +24,9 @@ public final class ShellScreen extends LinearLayout implements HomeScreen.Naviga
     private final DataTransfer transfer;
     private final FrameLayout pageHost;
     private final BottomNavBar nav;
+    private final TaskActions taskActions;
     private HomeScreen home;
+    private TasksScreen tasksScreen;
     private int currentTab;
 
     public ShellScreen(Activity activity, DayHubData data, Overlays overlays, DataTransfer transfer) {
@@ -34,6 +36,7 @@ public final class ShellScreen extends LinearLayout implements HomeScreen.Naviga
         this.overlays = overlays;
         this.transfer = transfer;
         setOrientation(VERTICAL);
+        taskActions = new TaskActions(activity, data, overlays, this::refresh);
 
         pageHost = new FrameLayout(activity);
         addView(pageHost, new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
@@ -77,10 +80,17 @@ public final class ShellScreen extends LinearLayout implements HomeScreen.Naviga
         pageHost.removeAllViews();
         if (index == 0) {
             // One Home for the whole session, so a half-typed note is still there when you come back.
-            if (home == null) home = new HomeScreen(activity, data, overlays, transfer, this);
+            if (home == null) home = new HomeScreen(activity, data, overlays, transfer, taskActions, this);
             pageHost.addView(home, new FrameLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
             home.refresh();
+            return;
+        }
+        if (index == 1) {
+            if (tasksScreen == null) tasksScreen = new TasksScreen(activity, data, taskActions);
+            pageHost.addView(tasksScreen, new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            tasksScreen.refresh();
             return;
         }
         pageHost.addView(placeholder(index), new FrameLayout.LayoutParams(

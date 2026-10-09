@@ -10,15 +10,11 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 
 import app.dayhub.data.DashboardInsights;
-import app.dayhub.data.DataError;
 import app.dayhub.data.DayHubData;
 import app.dayhub.data.HomeData;
 import app.dayhub.data.Insights;
 import app.dayhub.data.Model.Task;
 import app.dayhub.data.Validate;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.util.List;
 
@@ -40,6 +36,7 @@ public final class HomeScreen extends ScrollView {
     private final DayHubData data;
     private final Overlays overlays;
     private final DataTransfer transfer;
+    private final TaskActions taskActions;
     private final Navigator navigator;
 
     private final LinearLayout head;
@@ -51,12 +48,13 @@ public final class HomeScreen extends ScrollView {
     private final Runnable refresh = this::refresh;
 
     public HomeScreen(Activity activity, DayHubData data, Overlays overlays, DataTransfer transfer,
-                      Navigator navigator) {
+                      TaskActions taskActions, Navigator navigator) {
         super(activity);
         this.activity = activity;
         this.data = data;
         this.overlays = overlays;
         this.transfer = transfer;
+        this.taskActions = taskActions;
         this.navigator = navigator;
         setFillViewport(true);
 
@@ -222,42 +220,29 @@ public final class HomeScreen extends ScrollView {
 
     private void drawTasks(HomeData home) {
         tasks.removeAllViews();
-        tasks.addView(Sketch.label(activity, "Today", 22, true, R.color.ink));
+        LinearLayout title = new LinearLayout(activity);
+        title.setOrientation(LinearLayout.HORIZONTAL);
+        title.setGravity(Gravity.CENTER_VERTICAL);
+        title.addView(Sketch.label(activity, "Today", 22, true, R.color.ink),
+                new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        HandDrawnButton add = new HandDrawnButton(activity, "+ Add", false);
+        add.setOnClickListener(v -> taskActions.openSheet(null));
+        title.addView(add);
+        tasks.addView(title);
+
         List<Task> open = home.openTasks();
         int shown = Math.min(MAX_TASKS_SHOWN, open.size());
         if (shown == 0) {
             tasks.addView(Sketch.label(activity,
-                    open.isEmpty() && home.tasks.doneToday > 0 ? "All done for today. Add one to get going."
-                            : "No tasks yet. Tasks you add will show up here.",
+                    home.tasks.doneToday > 0 ? "All done for today. Add one to get going."
+                            : "No tasks yet. Add one to get going.",
                     16, false, R.color.muted), rowParams(10));
         }
-        for (int i = 0; i < shown; i++) tasks.addView(taskRow(open.get(i), home), rowParams(4));
-        String meta = home.tasks.doneToday + " done today" + (open.size() > shown ? " · " + (open.size() - shown) + " more" : "");
-        tasks.addView(footer(meta, "All tasks", () -> navigator.go("tasks")), rowParams(8));
-    }
-
-    private View taskRow(Task task, HomeData home) {
-        boolean overdue = task.dueOn != null && task.dueOn.compareTo(home.today) < 0;
-        String label = task.dueOn == null ? "" : DateLabels.dueLabel(activity, task.dueOn, home.today);
-        HandDrawnCheckRow row = new HandDrawnCheckRow(activity, (task.priority != 0 ? "★ " : "") + task.title)
-                .strikeWhenChecked()
-                .setSubtitle(overdue ? "Overdue · " + label : label, overdue);
-        row.setChecked(task.done);
-        row.setOnChange(() -> setTaskDone(task, row.isChecked(), home.today));
-        return row;
-    }
-
-    private void setTaskDone(Task task, boolean done, String today) {
-        try {
-            JSONObject body = new JSONObject().put("done", done).put("today", today).put("time", DateLabels.nowHHMM());
-            data.updateTask(task.id, body);
-            data.commit();
-        } catch (DataError e) {
-            overlays.toast(e.getMessage());
-        } catch (JSONException e) {
-            overlays.toast("Could not update the task");
+        for (int i = 0; i < shown; i++) {
+            tasks.addView(TaskRowView.build(activity, open.get(i), home.today, true, taskActions), rowParams(4));
         }
-        refresh();
+        String meta = home.tasks.doneToday + " done today" + (open.size() > shown ? " \u00B7 " + (open.size() - shown) + " more" : "");
+        tasks.addView(footer(meta, "All tasks", () -> navigator.go("tasks")), rowParams(8));
     }
 
     // ---------- spending ----------

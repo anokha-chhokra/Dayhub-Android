@@ -56,6 +56,12 @@ public final class BottomSheet extends FrameLayout {
         panel.setLayoutParams(lp);
         panel.setPadding(Sketch.dp(c, 20), Sketch.dp(c, 18), Sketch.dp(c, 20),
                 hidden + Sketch.dp(c, 18) + bottomInset);
+        // The keyboard shows and hides after the sheet opens: keep the sheet above it.
+        setOnApplyWindowInsetsListener((v, insets) -> {
+            panel.setPadding(Sketch.dp(c, 20), Sketch.dp(c, 18), Sketch.dp(c, 20),
+                    hidden + Sketch.dp(c, 18) + EdgeToEdgeShell.insetsOf(insets)[3]);
+            return insets;
+        });
 
         host.addView(this, new ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
@@ -63,6 +69,7 @@ public final class BottomSheet extends FrameLayout {
         scrim.animate().alpha(1f).setDuration(200);
         panel.setTranslationY(Sketch.dp(c, 700));
         panel.animate().translationY(0f).setDuration(240);
+        requestApplyInsets();
     }
 
     public void dismiss() {
