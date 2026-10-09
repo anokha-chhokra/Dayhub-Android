@@ -27,10 +27,12 @@ public final class ShellScreen extends LinearLayout implements HomeScreen.Naviga
     private final TaskActions taskActions;
     private final HabitActions habitActions;
     private final JournalActions journalActions;
+    private final ExpenseActions expenseActions;
     private HomeScreen home;
     private TasksScreen tasksScreen;
     private HabitsScreen habitsScreen;
     private JournalScreen journalScreen;
+    private SpendScreen spendScreen;
     private int currentTab;
 
     public ShellScreen(Activity activity, DayHubData data, Overlays overlays, DataTransfer transfer) {
@@ -43,6 +45,7 @@ public final class ShellScreen extends LinearLayout implements HomeScreen.Naviga
         taskActions = new TaskActions(activity, data, overlays, this::refresh);
         habitActions = new HabitActions(activity, data, overlays, this::refresh);
         journalActions = new JournalActions(activity, data, overlays, this::refresh);
+        expenseActions = new ExpenseActions(activity, data, overlays, this::refresh);
 
         pageHost = new FrameLayout(activity);
         addView(pageHost, new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
@@ -88,7 +91,7 @@ public final class ShellScreen extends LinearLayout implements HomeScreen.Naviga
         pageHost.removeAllViews();
         if (index == 0) {
             // One Home for the whole session, so a half-typed note is still there when you come back.
-            if (home == null) home = new HomeScreen(activity, data, overlays, transfer, taskActions, journalActions, this);
+            if (home == null) home = new HomeScreen(activity, data, overlays, transfer, taskActions, journalActions, expenseActions, this);
             pageHost.addView(home, new FrameLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
             home.refresh();
@@ -109,10 +112,17 @@ public final class ShellScreen extends LinearLayout implements HomeScreen.Naviga
             return;
         }
         if (index == 3) {
-            if (journalScreen == null) journalScreen = new JournalScreen(activity, data, habitActions, journalActions);
+            if (journalScreen == null) journalScreen = new JournalScreen(activity, data, habitActions, journalActions, expenseActions);
             pageHost.addView(journalScreen, new FrameLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
             journalScreen.refresh();
+            return;
+        }
+        if (index == 4) {
+            if (spendScreen == null) spendScreen = new SpendScreen(activity, data, expenseActions, transfer);
+            pageHost.addView(spendScreen, new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            spendScreen.refresh();
             return;
         }
         pageHost.addView(placeholder(index), new FrameLayout.LayoutParams(

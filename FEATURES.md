@@ -23,7 +23,7 @@ A native, offline Java app: no WebView, no network, no INTERNET permission. Tick
 - [x] 14. Tasks: add and edit, due dates, priority, star, done, delete with Undo
 - [x] 15. Habits: check, goal and limit habits, week view
 - [x] 16. Journal: daily timeline entries with mood and tags
-- [ ] 17. Spend: expenses, categories, budget, month totals
+- [x] 17. Spend: expenses, categories, budget, month totals
 - [ ] 18. Music: saved YouTube links that open in the YouTube app or browser (no in-app player)
 - [ ] 19. Settings: profile, currency, reminders, backup, focus, notifications
 

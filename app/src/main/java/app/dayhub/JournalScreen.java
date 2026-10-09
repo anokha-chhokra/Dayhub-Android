@@ -38,6 +38,7 @@ public final class JournalScreen extends ScrollView {
     private final DayHubData data;
     private final HabitActions habitActions;
     private final JournalActions journalActions;
+    private final ExpenseActions expenseActions;
     private final LinearLayout tabs;
     private final LinearLayout nav;
     private final LinearLayout body;
@@ -45,12 +46,14 @@ public final class JournalScreen extends ScrollView {
     private String day = Validate.localDate();
     private String ym = day.substring(0, 7);
 
-    public JournalScreen(Activity activity, DayHubData data, HabitActions habitActions, JournalActions journalActions) {
+    public JournalScreen(Activity activity, DayHubData data, HabitActions habitActions, JournalActions journalActions,
+                         ExpenseActions expenseActions) {
         super(activity);
         this.activity = activity;
         this.data = data;
         this.habitActions = habitActions;
         this.journalActions = journalActions;
+        this.expenseActions = expenseActions;
         setFillViewport(true);
 
         LinearLayout column = new LinearLayout(activity);
@@ -274,7 +277,16 @@ public final class JournalScreen extends ScrollView {
         }
         HandDrawnButton write = new HandDrawnButton(activity, "Write entry", true);
         write.setOnClickListener(v -> journalActions.openSheet(null, day, null, null));
-        timeline.addView(write, rowParams(14));
+        HandDrawnButton expense = new HandDrawnButton(activity, "+ Expense", false);
+        expense.setOnClickListener(v -> expenseActions.openSheet(day));
+        LinearLayout actionRow = new LinearLayout(activity);
+        actionRow.setOrientation(LinearLayout.HORIZONTAL);
+        LinearLayout.LayoutParams gap = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        gap.rightMargin = Sketch.dp(activity, 12);
+        actionRow.addView(write, gap);
+        actionRow.addView(expense);
+        timeline.addView(actionRow, rowParams(14));
         body.addView(timeline, rowParams(14));
     }
 

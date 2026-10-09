@@ -38,6 +38,7 @@ public final class HomeScreen extends ScrollView {
     private final DataTransfer transfer;
     private final TaskActions taskActions;
     private final JournalActions journalActions;
+    private final ExpenseActions expenseActions;
     private final Navigator navigator;
 
     private final LinearLayout head;
@@ -49,7 +50,8 @@ public final class HomeScreen extends ScrollView {
     private final Runnable refresh = this::refresh;
 
     public HomeScreen(Activity activity, DayHubData data, Overlays overlays, DataTransfer transfer,
-                      TaskActions taskActions, JournalActions journalActions, Navigator navigator) {
+                      TaskActions taskActions, JournalActions journalActions, ExpenseActions expenseActions,
+                      Navigator navigator) {
         super(activity);
         this.activity = activity;
         this.data = data;
@@ -57,6 +59,7 @@ public final class HomeScreen extends ScrollView {
         this.transfer = transfer;
         this.taskActions = taskActions;
         this.journalActions = journalActions;
+        this.expenseActions = expenseActions;
         this.navigator = navigator;
         setFillViewport(true);
 
@@ -249,20 +252,6 @@ public final class HomeScreen extends ScrollView {
 
     // ---------- spending ----------
 
-    private static String paceText(Insights.Pace pace, String currency) {
-        if (pace.status.equals("none") || pace.status.equals("over")) return "";
-        StringBuilder sb = new StringBuilder();
-        if (pace.perDayLeftMinor != null && pace.daysLeft > 0) {
-            sb.append("About ").append(MoneyFormat.money(pace.perDayLeftMinor, currency)).append(" a day for the next ")
-                    .append(pace.daysLeft).append(pace.daysLeft == 1 ? " day" : " days");
-        }
-        if (pace.status.equals("watch")) {
-            if (sb.length() > 0) sb.append(" · ");
-            sb.append("at this pace the month ends near ").append(MoneyFormat.money(pace.projectedMinor, currency));
-        }
-        return sb.toString();
-    }
-
     private void drawSpend(HomeData home) {
         DashboardInsights.Spend s = home.spend;
         boolean hasBudget = s.budgetMinor > 0;
@@ -270,7 +259,15 @@ public final class HomeScreen extends ScrollView {
         int percent = hasBudget ? (int) Math.min(100, Math.round((double) s.totalMinor / s.budgetMinor * 100)) : 0;
 
         spend.removeAllViews();
-        spend.addView(Sketch.label(activity, "Spending", 22, true, R.color.ink));
+        LinearLayout spendTitle = new LinearLayout(activity);
+        spendTitle.setOrientation(LinearLayout.HORIZONTAL);
+        spendTitle.setGravity(Gravity.CENTER_VERTICAL);
+        spendTitle.addView(Sketch.label(activity, "Spending", 22, true, R.color.ink),
+                new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        HandDrawnButton addExpense = new HandDrawnButton(activity, "+ Expense", false);
+        addExpense.setOnClickListener(v -> expenseActions.openSheet(home.today));
+        spendTitle.addView(addExpense);
+        spend.addView(spendTitle);
         spend.addView(Sketch.label(activity, MoneyFormat.money(s.totalMinor, s.currency), 34, true, R.color.ink), rowParams(6));
         spend.addView(Sketch.label(activity, hasBudget
                 ? (over ? "Over budget by " + MoneyFormat.money(s.totalMinor - s.budgetMinor, s.currency)
@@ -278,7 +275,7 @@ public final class HomeScreen extends ScrollView {
                                 + MoneyFormat.money(s.budgetMinor, s.currency))
                 : "this month · set a budget in Settings", 15, false, over ? R.color.red : R.color.muted));
         if (hasBudget) spend.addView(new HandDrawnBar(activity, percent, over), rowParams(10));
-        String pace = paceText(s.pace, s.currency);
+        String pace = MoneyFormat.paceText(s.pace, s.currency);
         if (!pace.isEmpty()) {
             spend.addView(Sketch.label(activity, pace, 14, false,
                     s.pace.status.equals("watch") ? R.color.red : R.color.muted), rowParams(8));
