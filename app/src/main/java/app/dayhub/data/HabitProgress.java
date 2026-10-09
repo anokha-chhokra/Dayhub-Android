@@ -139,6 +139,43 @@ public final class HabitProgress {
         return new HabitDay(h, day, v == null ? 0 : v);
     }
 
+    /** How one day of the week strip went: habits scheduled that day, and how many were done. */
+    public static final class DaySummary {
+        public final String day;
+        public final int scheduled;
+        public final int done;
+
+        DaySummary(String day, int scheduled, int done) {
+            this.day = day;
+            this.scheduled = scheduled;
+            this.done = done;
+        }
+    }
+
+    /**
+     * The last {@code count} days ending on {@code today} (oldest first), each with the number of
+     * habits scheduled and done. Counts only habits that are still active, like the calendar does.
+     */
+    public List<DaySummary> recentDays(String today, int count) {
+        String first = Validate.addDays(today, -(count - 1));
+        Map<String, Integer> values = new HashMap<>();
+        for (HabitLog l : data.listLogs(first, Validate.addDays(today, 1))) values.put(l.day + "|" + l.habitId, l.value);
+        List<Habit> habits = data.listHabits(false);
+        List<DaySummary> out = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            String day = Validate.addDays(first, i);
+            int scheduled = 0;
+            int done = 0;
+            for (Habit h : habits) {
+                if (!HabitRules.isScheduled(h, day)) continue;
+                scheduled++;
+                if (HabitRules.isDone(h, values.get(day + "|" + h.id))) done++;
+            }
+            out.add(new DaySummary(day, scheduled, done));
+        }
+        return out;
+    }
+
     /** Logs a habit (see {@link DayHubData#logHabit}) and records any badge it earns. */
     public LogResult logHabit(int habitId, JSONObject body) {
         data.logHabit(habitId, body);

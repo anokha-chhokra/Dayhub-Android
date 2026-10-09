@@ -17,6 +17,7 @@ public final class BottomSheet extends FrameLayout {
 
     private final View scrim;
     private final LinearLayout panel;
+    private final BoundedScrollView bodyScroll;
     private boolean closing;
     private Runnable onDismiss;
 
@@ -37,7 +38,11 @@ public final class BottomSheet extends FrameLayout {
         LinearLayout.LayoutParams bodyParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         bodyParams.topMargin = Sketch.dp(c, 12);
-        panel.addView(body, bodyParams);
+        // A tall form scrolls inside the sheet instead of running off the screen.
+        bodyScroll = new BoundedScrollView(c);
+        bodyScroll.setMaxHeight((int) (c.getResources().getDisplayMetrics().heightPixels * 0.7f));
+        bodyScroll.addView(body);
+        panel.addView(bodyScroll, bodyParams);
         addView(panel);
     }
 
@@ -58,8 +63,11 @@ public final class BottomSheet extends FrameLayout {
                 hidden + Sketch.dp(c, 18) + bottomInset);
         // The keyboard shows and hides after the sheet opens: keep the sheet above it.
         setOnApplyWindowInsetsListener((v, insets) -> {
-            panel.setPadding(Sketch.dp(c, 20), Sketch.dp(c, 18), Sketch.dp(c, 20),
-                    hidden + Sketch.dp(c, 18) + EdgeToEdgeShell.insetsOf(insets)[3]);
+            int[] in = EdgeToEdgeShell.insetsOf(insets);
+            panel.setPadding(Sketch.dp(c, 20), Sketch.dp(c, 18), Sketch.dp(c, 20), hidden + Sketch.dp(c, 18) + in[3]);
+            // What is left of the screen once the bars, the keyboard and the sheet's own title are taken off.
+            int room = c.getResources().getDisplayMetrics().heightPixels - in[1] - in[3] - Sketch.dp(c, 130);
+            bodyScroll.setMaxHeight(Math.max(Sketch.dp(c, 160), room));
             return insets;
         });
 
