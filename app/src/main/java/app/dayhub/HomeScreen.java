@@ -37,6 +37,7 @@ public final class HomeScreen extends ScrollView {
     private final Overlays overlays;
     private final DataTransfer transfer;
     private final TaskActions taskActions;
+    private final JournalActions journalActions;
     private final Navigator navigator;
 
     private final LinearLayout head;
@@ -48,13 +49,14 @@ public final class HomeScreen extends ScrollView {
     private final Runnable refresh = this::refresh;
 
     public HomeScreen(Activity activity, DayHubData data, Overlays overlays, DataTransfer transfer,
-                      TaskActions taskActions, Navigator navigator) {
+                      TaskActions taskActions, JournalActions journalActions, Navigator navigator) {
         super(activity);
         this.activity = activity;
         this.data = data;
         this.overlays = overlays;
         this.transfer = transfer;
         this.taskActions = taskActions;
+        this.journalActions = journalActions;
         this.navigator = navigator;
         setFillViewport(true);
 
@@ -70,7 +72,7 @@ public final class HomeScreen extends ScrollView {
 
         attention = tile(column);
         tasks = tile(column);
-        journal = new QuickJournalTile(activity, data, overlays, refresh, () -> navigator.go("journal"));
+        journal = new QuickJournalTile(activity, data, overlays, journalActions, refresh, () -> navigator.go("journal"));
         column.addView(journal, tileParams());
         spend = tile(column);
         column.addView(focusTile(), tileParams());

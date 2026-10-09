@@ -26,7 +26,7 @@ public final class HabitProgress {
         public final boolean done;
         public final int pointsToday;
 
-        HabitDay(Habit habit, String day, int value) {
+        public HabitDay(Habit habit, String day, int value) {
             this.habit = habit;
             this.scheduled = HabitRules.isScheduled(habit, day);
             this.value = value;

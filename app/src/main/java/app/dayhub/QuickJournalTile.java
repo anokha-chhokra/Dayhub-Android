@@ -1,8 +1,6 @@
 package app.dayhub;
 
 import android.app.Activity;
-import android.os.Handler;
-import android.os.Looper;
 import android.text.Editable;
 import android.text.InputType;
 import android.text.TextWatcher;
@@ -14,7 +12,6 @@ import android.widget.TextView;
 
 import app.dayhub.data.DataError;
 import app.dayhub.data.DayHubData;
-import app.dayhub.data.ExpenseDetector;
 import app.dayhub.data.HabitProgress;
 import app.dayhub.data.HomeData;
 import app.dayhub.data.Moods;
@@ -24,11 +21,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 /**
  * The Journal tile on Home: jot a note, optionally pick a mood, and see spending found in the
  * text offered as expenses to add along with it. With nothing typed, tapping a face is a one-tap
@@ -36,19 +28,16 @@ import java.util.Set;
  * note survives them.
  */
 public final class QuickJournalTile extends HandDrawnCard {
-    private static final long DETECT_DELAY_MS = 450;
-
     private final Activity activity;
     private final DayHubData data;
     private final Overlays overlays;
+    private final JournalActions journalActions;
     private final Runnable onChanged;
-    private final Runnable openJournal;
-    private final Handler handler = new Handler(Looper.getMainLooper());
 
     private final TextView promptLabel;
     private final TextView promptText;
     private final HandDrawnField note;
-    private final LinearLayout suggestionsHost;
+    private final ExpenseSuggestionsView suggestions;
     private final LinearLayout moodRow;
     private final TextView moodHint;
     private final TextView count;
@@ -57,22 +46,27 @@ public final class QuickJournalTile extends HandDrawnCard {
     private Integer latestMood;
     private Integer quickMoodId;
     private String today = Validate.localDate();
-    private String currency = "INR";
     private boolean saving;
-    private List<ExpenseDetector.Suggestion> suggestions = new ArrayList<>();
-    private final Set<String> skipped = new HashSet<>();
-    private final Runnable detect = this::runDetection;
 
-    public QuickJournalTile(Activity activity, DayHubData data, Overlays overlays, Runnable onChanged,
-                            Runnable openJournal) {
+    public QuickJournalTile(Activity activity, DayHubData data, Overlays overlays, JournalActions journalActions,
+                            Runnable onChanged, Runnable openJournal) {
         super(activity);
         this.activity = activity;
         this.data = data;
         this.overlays = overlays;
+        this.journalActions = journalActions;
         this.onChanged = onChanged;
-        this.openJournal = openJournal;
 
-        addView(Sketch.label(activity, "Journal", 22, true, R.color.ink));
+        LinearLayout title = new LinearLayout(activity);
+        title.setOrientation(HORIZONTAL);
+        title.setGravity(Gravity.CENTER_VERTICAL);
+        title.addView(Sketch.label(activity, "Journal", 22, true, R.color.ink),
+                new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        HandDrawnButton full = new HandDrawnButton(activity, "Full editor", false);
+        full.setOnClickListener(v -> openFullEditor());
+        title.addView(full);
+        addView(title);
+
         promptLabel = Sketch.label(activity, "", 14, true, R.color.muted);
         promptText = Sketch.label(activity, "", 15, false, R.color.muted);
         addView(spaced(promptLabel, 8));
@@ -87,15 +81,14 @@ public final class QuickJournalTile extends HandDrawnCard {
             @Override public void beforeTextChanged(CharSequence s, int a, int b, int c) {}
             @Override public void onTextChanged(CharSequence s, int a, int b, int c) {}
             @Override public void afterTextChanged(Editable s) {
-                scheduleDetection();
+                suggestions.schedule(s.toString());
                 drawMoodFaces();
             }
         });
         addView(spaced(note, 10));
 
-        suggestionsHost = new LinearLayout(activity);
-        suggestionsHost.setOrientation(VERTICAL);
-        addView(spaced(suggestionsHost, 4));
+        suggestions = new ExpenseSuggestionsView(activity, data);
+        addView(spaced(suggestions, 4));
 
         moodRow = new LinearLayout(activity);
         moodRow.setOrientation(HORIZONTAL);
@@ -131,7 +124,7 @@ public final class QuickJournalTile extends HandDrawnCard {
     /** Redraws the prompt, faces and counts from fresh data; the note being typed is left alone. */
     public void update(HomeData home) {
         today = home.today;
-        currency = home.spend.currency;
+        suggestions.configure(today, home.spend.currency, null);
         latestMood = home.journal.latestMood;
         quickMoodId = home.journal.quickMoodId;
         promptLabel.setText(home.journal.prompt.title);
@@ -141,6 +134,16 @@ public final class QuickJournalTile extends HandDrawnCard {
         count.setText(n == 0 ? "Nothing written yet today"
                 : n + (n == 1 ? " entry" : " entries") + " today"
                 + (home.journal.latestMood != null ? " · " + Moods.emoji(home.journal.latestMood) : ""));
+    }
+
+    // ---------- the full editor ----------
+
+    /** Opens the full entry sheet with whatever has been typed so far, and clears the quick box. */
+    private void openFullEditor() {
+        String draftText = note.getText().toString();
+        Integer mood = draftMood;
+        clearDraft();
+        journalActions.openSheet(null, today, draftText.trim().isEmpty() ? null : draftText, mood);
     }
 
     // ---------- mood ----------
@@ -169,8 +172,7 @@ public final class QuickJournalTile extends HandDrawnCard {
                     quickMood(m);
                 }
             });
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, Sketch.dp(activity, 52), 1f);
-            moodRow.addView(face, lp);
+            moodRow.addView(face, new LinearLayout.LayoutParams(0, Sketch.dp(activity, 52), 1f));
         }
         moodHint.setText(writing ? "The mood is saved with this note." : "Tap a face for a one-tap mood check-in.");
     }
@@ -187,73 +189,13 @@ public final class QuickJournalTile extends HandDrawnCard {
                 result = progress.createEntry(body.put("day", today).put("time", DateLabels.nowHHMM()));
             }
             data.commit();
-            overlays.toast("Mood saved " + m.emoji + badgeText(result.progress));
+            overlays.toast("Mood saved " + m.emoji + JournalActions.badgeText(result.progress));
             onChanged.run();
         } catch (DataError e) {
             overlays.toast(e.getMessage());
             onChanged.run();
         } catch (JSONException e) {
             overlays.toast("Could not save the mood");
-        }
-    }
-
-    private static String badgeText(HabitProgress.Synced progress) {
-        if (progress.newBadges.isEmpty()) return "";
-        StringBuilder sb = new StringBuilder(". New badge: ");
-        for (int i = 0; i < progress.newBadges.size(); i++) {
-            if (i > 0) sb.append(", ");
-            sb.append(progress.newBadges.get(i).icon).append(' ').append(progress.newBadges.get(i).name);
-        }
-        return sb.toString();
-    }
-
-    // ---------- spending found in the text ----------
-
-    private void scheduleDetection() {
-        handler.removeCallbacks(detect);
-        if (!hasDraft()) {
-            suggestions = new ArrayList<>();
-            skipped.clear();
-            drawSuggestions();
-            return;
-        }
-        handler.postDelayed(detect, DETECT_DELAY_MS);
-    }
-
-    private void runDetection() {
-        try {
-            suggestions = ExpenseDetector.suggest(data, note.getText().toString(), today, null);
-        } catch (DataError e) {
-            return; // detection is a bonus; ignore failures
-        }
-        Set<String> keys = new HashSet<>();
-        for (ExpenseDetector.Suggestion s : suggestions) keys.add(key(s));
-        skipped.retainAll(keys);
-        drawSuggestions();
-    }
-
-    private static String key(ExpenseDetector.Suggestion s) {
-        return s.amountMinor + "|" + s.note + "|" + s.daysAgo;
-    }
-
-    private static String whenLabel(int daysAgo) {
-        return daysAgo == 0 ? "" : daysAgo == 1 ? " · yesterday" : " · " + daysAgo + " days earlier";
-    }
-
-    private void drawSuggestions() {
-        suggestionsHost.removeAllViews();
-        if (suggestions.isEmpty()) return;
-        suggestionsHost.addView(Sketch.label(activity, "Looks like spending", 14, true, R.color.muted));
-        for (ExpenseDetector.Suggestion s : suggestions) {
-            String text = "Add as expense: " + MoneyFormat.money(s.amountMinor, currency) + " · " + s.category
-                    + (s.note.isEmpty() ? "" : " · " + s.note) + whenLabel(s.daysAgo);
-            HandDrawnCheckRow row = new HandDrawnCheckRow(activity, text);
-            row.setChecked(!skipped.contains(key(s)));
-            row.setOnChange(() -> {
-                if (row.isChecked()) skipped.remove(key(s));
-                else skipped.add(key(s));
-            });
-            suggestionsHost.addView(row);
         }
     }
 
@@ -264,12 +206,7 @@ public final class QuickJournalTile extends HandDrawnCard {
         if (text.isEmpty() || saving) return;
         saving = true;
         try {
-            JSONArray expenses = new JSONArray();
-            for (ExpenseDetector.Suggestion s : suggestions) {
-                if (skipped.contains(key(s))) continue;
-                expenses.put(new JSONObject().put("amount", MoneyFormat.decimal(s.amountMinor))
-                        .put("category", s.category).put("note", s.note).put("daysAgo", s.daysAgo));
-            }
+            JSONArray expenses = suggestions.selected();
             JSONObject body = new JSONObject().put("day", today).put("time", DateLabels.nowHHMM()).put("text", text)
                     .put("tags", new JSONArray()).put("expenses", expenses).put("today", today);
             if (draftMood != null) body.put("mood", draftMood);
@@ -278,7 +215,7 @@ public final class QuickJournalTile extends HandDrawnCard {
             int added = data.listEntryExpenses(result.entry.id).size();
             clearDraft();
             overlays.toast((added > 0 ? "Saved. " + added + " expense" + (added > 1 ? "s" : "") + " added too."
-                    : "Saved to your journal") + badgeText(result.progress));
+                    : "Saved to your journal") + JournalActions.badgeText(result.progress));
             onChanged.run();
         } catch (DataError e) {
             overlays.toast(e.getMessage());
@@ -289,12 +226,9 @@ public final class QuickJournalTile extends HandDrawnCard {
     }
 
     private void clearDraft() {
-        handler.removeCallbacks(detect);
         note.setText("");
         draftMood = null;
-        suggestions = new ArrayList<>();
-        skipped.clear();
-        drawSuggestions();
+        suggestions.reset();
         drawMoodFaces();
     }
 }

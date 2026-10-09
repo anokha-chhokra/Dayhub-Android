@@ -26,9 +26,11 @@ public final class ShellScreen extends LinearLayout implements HomeScreen.Naviga
     private final BottomNavBar nav;
     private final TaskActions taskActions;
     private final HabitActions habitActions;
+    private final JournalActions journalActions;
     private HomeScreen home;
     private TasksScreen tasksScreen;
     private HabitsScreen habitsScreen;
+    private JournalScreen journalScreen;
     private int currentTab;
 
     public ShellScreen(Activity activity, DayHubData data, Overlays overlays, DataTransfer transfer) {
@@ -40,6 +42,7 @@ public final class ShellScreen extends LinearLayout implements HomeScreen.Naviga
         setOrientation(VERTICAL);
         taskActions = new TaskActions(activity, data, overlays, this::refresh);
         habitActions = new HabitActions(activity, data, overlays, this::refresh);
+        journalActions = new JournalActions(activity, data, overlays, this::refresh);
 
         pageHost = new FrameLayout(activity);
         addView(pageHost, new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
@@ -79,11 +82,13 @@ public final class ShellScreen extends LinearLayout implements HomeScreen.Naviga
     }
 
     private void showPage(int index) {
+        // Leaving the Journal resets it, so coming back lands on today.
+        if (currentTab == 3 && index != 3 && journalScreen != null) journalScreen.resetToToday();
         currentTab = index;
         pageHost.removeAllViews();
         if (index == 0) {
             // One Home for the whole session, so a half-typed note is still there when you come back.
-            if (home == null) home = new HomeScreen(activity, data, overlays, transfer, taskActions, this);
+            if (home == null) home = new HomeScreen(activity, data, overlays, transfer, taskActions, journalActions, this);
             pageHost.addView(home, new FrameLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
             home.refresh();
@@ -101,6 +106,13 @@ public final class ShellScreen extends LinearLayout implements HomeScreen.Naviga
             pageHost.addView(habitsScreen, new FrameLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
             habitsScreen.refresh();
+            return;
+        }
+        if (index == 3) {
+            if (journalScreen == null) journalScreen = new JournalScreen(activity, data, habitActions, journalActions);
+            pageHost.addView(journalScreen, new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            journalScreen.refresh();
             return;
         }
         pageHost.addView(placeholder(index), new FrameLayout.LayoutParams(
