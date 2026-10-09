@@ -18,9 +18,15 @@ public final class RestoreConfirm {
      */
     public static void show(Activity activity, Overlays overlays, String summary, String warning,
                             Runnable onReplace) {
+        show(activity, overlays, "This backup", summary, warning, onReplace);
+    }
+
+    /** @param subject who "has" the summary: "This backup", or a file name in quotes */
+    public static void show(Activity activity, Overlays overlays, String subject, String summary, String warning,
+                            Runnable onReplace) {
         LinearLayout body = new LinearLayout(activity);
         body.setOrientation(LinearLayout.VERTICAL);
-        body.addView(Sketch.label(activity, "This backup has " + summary + ".", 16, false, R.color.ink));
+        body.addView(Sketch.label(activity, subject + " has " + summary + ".", 16, false, R.color.ink));
 
         LinearLayout.LayoutParams warningParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);

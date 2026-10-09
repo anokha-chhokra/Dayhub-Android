@@ -68,24 +68,32 @@ public final class DataTransfer {
     public void restoreFromFile(Runnable onRestored) {
         results.launch(DocumentFiles.pickIntent(), (resultCode, intent) -> {
             if (resultCode != Activity.RESULT_OK || intent == null || intent.getData() == null) return;
-            String text;
-            try {
-                text = DocumentFiles.readText(activity, intent.getData());
-            } catch (IOException e) {
-                overlays.toast("Could not read that file");
-                return;
-            }
-            String summary;
-            try {
-                summary = DamagedDataRecovery.inspect(text); // refuses a bad file before anything changes
-            } catch (DataError e) {
-                overlays.toast(e.getMessage());
-                return;
-            }
-            RestoreConfirm.show(activity, overlays, summary,
-                    "Restoring replaces everything now saved on this device.",
-                    () -> replace(text, onRestored));
+            restoreFromUri(intent.getData(), null, onRestored);
         });
+    }
+
+    /**
+     * Reads the backup at {@code uri}, shows what is in it, and replaces everything with it once the
+     * person confirms. {@code name} is how to refer to the file ("the backup file"), or null.
+     */
+    public void restoreFromUri(android.net.Uri uri, String name, Runnable onRestored) {
+        String text;
+        try {
+            text = DocumentFiles.readText(activity, uri);
+        } catch (IOException | RuntimeException e) {
+            overlays.toast("Could not read that file");
+            return;
+        }
+        String summary;
+        try {
+            summary = DamagedDataRecovery.inspect(text); // refuses a bad file before anything changes
+        } catch (DataError e) {
+            overlays.toast(e.getMessage());
+            return;
+        }
+        RestoreConfirm.show(activity, overlays, name == null ? "This backup" : "\u201C" + name + "\u201D", summary,
+                "Restoring replaces everything now saved on this device.",
+                () -> replace(text, onRestored));
     }
 
     private void replace(String backupText, Runnable onRestored) {

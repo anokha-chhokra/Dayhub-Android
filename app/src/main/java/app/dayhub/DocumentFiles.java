@@ -32,6 +32,19 @@ public final class DocumentFiles {
                 .putExtra(Intent.EXTRA_TITLE, fileName);
     }
 
+    private static final int KEEP = Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+            | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION;
+
+    /** The "open a file" screen, asking for access that lasts, for choosing the backup file. */
+    public static Intent chooseExistingIntent() {
+        return pickIntent().addFlags(KEEP);
+    }
+
+    /** The "save as" screen for a new backup file, asking for access that lasts. */
+    public static Intent createBackupIntent() {
+        return createIntent("dayhub-backup.json", "application/json").addFlags(KEEP);
+    }
+
     public static String readText(Context context, Uri uri) throws IOException {
         try (InputStream in = context.getContentResolver().openInputStream(uri)) {
             if (in == null) throw new IOException("Could not open that file");

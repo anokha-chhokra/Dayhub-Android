@@ -28,7 +28,7 @@ A native, offline Java app: no WebView, no network, no INTERNET permission. Tick
 - [x] 19. Settings: profile, currency, reminders, backup, focus, notifications
 
 ## Backup
-- [ ] 20. Single backup file chosen through the system file picker, overwritten on every backup (only the latest exists)
+- [x] 20. Single backup file chosen through the system file picker, overwritten on every backup (only the latest exists)
 - [ ] 21. Write verification: read the file back after writing; skip the backup if the data is blank
 - [ ] 22. Automatic backup after changes, and restore from a backup file
 

@@ -36,6 +36,7 @@ public final class SettingsScreen extends ScrollView {
     private final DataTransfer transfer;
     private final Runnable onChanged;
     private final LinearLayout column;
+    private final BackupFile backupFile;
 
     // What is being edited in the You card (kept between redraws, so a half-edited form survives).
     private HandDrawnField name;
@@ -52,6 +53,7 @@ public final class SettingsScreen extends ScrollView {
         this.results = results;
         this.transfer = transfer;
         this.onChanged = onChanged;
+        this.backupFile = new BackupFile(activity, new BackupPrefs(activity));
         setFillViewport(true);
         column = new LinearLayout(activity);
         column.setOrientation(LinearLayout.VERTICAL);
@@ -84,6 +86,7 @@ public final class SettingsScreen extends ScrollView {
         column.addView(Sketch.label(activity, "Settings", 32, true, R.color.ink));
         column.addView(youCard(s), rowParams(14));
         column.addView(remindersCard(s), rowParams(14));
+        column.addView(new BackupCard(activity, data, overlays, results, transfer, backupFile, onChanged), rowParams(14));
         column.addView(focusCard(), rowParams(14));
         column.addView(dataCard(), rowParams(14));
         column.addView(Sketch.label(activity, "Day Hub for Android " + versionName(), 14, false, R.color.muted), rowParams(14));

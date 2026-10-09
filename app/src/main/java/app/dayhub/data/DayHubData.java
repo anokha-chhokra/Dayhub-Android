@@ -863,6 +863,14 @@ public final class DayHubData {
 
     // ---------- backup and restore ----------
 
+    /**
+     * True when Day Hub holds no tasks, expenses, habits or journal entries (settings, music and
+     * badges do not count), as in a fresh install. Overwriting a backup with this would lose it.
+     */
+    public boolean isBlank() {
+        return state.tasks.isEmpty() && state.expenses.isEmpty() && state.habits.isEmpty() && state.journal.isEmpty();
+    }
+
     /** Everything in display order (tasks by due date, newest first, ...), as the backup file lists it. */
     State orderedState() {
         State o = new State();
