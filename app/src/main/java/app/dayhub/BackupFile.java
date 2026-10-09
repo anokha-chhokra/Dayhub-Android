@@ -8,6 +8,9 @@ import android.net.Uri;
 import android.os.ParcelFileDescriptor;
 import android.provider.OpenableColumns;
 
+import app.dayhub.data.WriteVerifier;
+
+import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -16,7 +19,7 @@ import java.nio.charset.StandardCharsets;
 
 /**
  * Feature 20: the backup file. One file the person chose (Downloads, Documents, Google Drive...),
- * overwritten in place with the whole of Day Hub every time, so there is always exactly one file
+ * overwritten in place with the whole of Day Hub every time and read back to be sure, so there is always exactly one file
  * and it is always the latest. Android's file picker gives the app lasting access to that one file
  * only; nothing else on the phone is touched.
  */
@@ -127,6 +130,10 @@ public final class BackupFile {
         byte[] bytes = text.getBytes(StandardCharsets.UTF_8);
         try {
             overwrite(target, bytes);
+            if (!WriteVerifier.confirms(bytes, limit -> readBytes(target, limit), Thread::sleep)) {
+                throw new IOException("Could not confirm that the backup file was saved. "
+                        + "Try Back up now again, or choose the file again.");
+            }
         } catch (IOException e) {
             prefs.failed(e.getMessage());
             throw e;
@@ -134,6 +141,30 @@ public final class BackupFile {
         Written w = new Written(bytes.length, System.currentTimeMillis());
         prefs.succeeded(w.bytes, w.at);
         return w;
+    }
+
+    /** Reads up to {@code limit} bytes (plus one, so a caller can tell the file was cut). */
+    public byte[] readBytes(Uri uri, long limit) throws IOException {
+        InputStream in;
+        try {
+            in = resolver().openInputStream(uri);
+        } catch (SecurityException e) {
+            throw new IOException("Day Hub no longer has permission for that file. Choose it again.");
+        } catch (FileNotFoundException e) {
+            throw new IOException("That file is gone. Choose a file again.");
+        }
+        if (in == null) throw new IOException("Android could not open that file.");
+        try (InputStream src = in) {
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            byte[] buf = new byte[16384];
+            long total = 0;
+            for (int n; (n = src.read(buf)) > 0; ) {
+                out.write(buf, 0, n);
+                total += n;
+                if (total > limit) break;
+            }
+            return out.toByteArray();
+        }
     }
 
     /** Writes bytes over whatever the file held: "wt" truncates, and the length is set explicitly in case a provider ignores that. */

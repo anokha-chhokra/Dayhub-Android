@@ -6,7 +6,6 @@ import android.text.format.DateUtils;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 
-import app.dayhub.data.DataExport;
 import app.dayhub.data.DayHubData;
 
 import java.io.IOException;
@@ -156,8 +155,9 @@ public final class BackupCard extends HandDrawnCard {
 
     private void backUp() {
         try {
-            BackupFile.Written w = file.write(DataExport.backup(data).text);
-            overlays.toast("Backed up (" + kb(w.bytes) + ")");
+            BackupRunner.Result r = BackupRunner.run(data, file, true);
+            if (r.skipped) overlays.toast("Skipped: Day Hub is empty and the backup file already has data.");
+            else overlays.toast("Backed up (" + kb(r.written.bytes) + ")");
         } catch (IOException e) {
             overlays.toast(e.getMessage());
         }
