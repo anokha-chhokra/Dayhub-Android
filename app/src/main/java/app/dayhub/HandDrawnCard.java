@@ -4,7 +4,7 @@ import android.content.Context;
 import android.widget.LinearLayout;
 
 /** A vertical container drawn as a hand-drawn card with a hard shadow. */
-public final class HandDrawnCard extends LinearLayout {
+public class HandDrawnCard extends LinearLayout {
     private static int nextSeed = 1;
 
     public HandDrawnCard(Context c) {

@@ -7,11 +7,13 @@ import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-/** A tappable row with a hand-drawn tick box and a label; used for checklists and single choices. */
+/** A tappable row with a hand-drawn tick box, a label and an optional small line under it. */
 public final class HandDrawnCheckRow extends LinearLayout {
     private static int nextSeed = 3000;
 
     private final TextView box;
+    private final TextView text;
+    private final TextView subtitle;
     private final HandDrawnDrawable off;
     private final HandDrawnDrawable on;
     private boolean checked;
@@ -35,10 +37,16 @@ public final class HandDrawnCheckRow extends LinearLayout {
         box.setBackground(off);
         addView(box, new LayoutParams(Sketch.dp(c, 34), Sketch.dp(c, 34)));
 
-        TextView text = Sketch.label(c, label, 17, false, R.color.ink);
+        LinearLayout column = new LinearLayout(c);
+        column.setOrientation(VERTICAL);
+        text = Sketch.label(c, label, 17, false, R.color.ink);
+        column.addView(text);
+        subtitle = Sketch.label(c, "", 14, false, R.color.muted);
+        subtitle.setVisibility(View.GONE);
+        column.addView(subtitle);
         LayoutParams lp = new LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f);
         lp.leftMargin = Sketch.dp(c, 12);
-        addView(text, lp);
+        addView(column, lp);
 
         super.setOnClickListener(v -> {
             setChecked(!checked);
@@ -54,6 +62,25 @@ public final class HandDrawnCheckRow extends LinearLayout {
         this.checked = checked;
         box.setBackground(checked ? on : off);
         box.setText(checked ? "✓" : "");
+        text.setPaintFlags(checked && strikeWhenChecked
+                ? text.getPaintFlags() | android.graphics.Paint.STRIKE_THRU_TEXT_FLAG
+                : text.getPaintFlags() & ~android.graphics.Paint.STRIKE_THRU_TEXT_FLAG);
+    }
+
+    private boolean strikeWhenChecked;
+
+    /** Cross the label out while ticked, like a finished task. */
+    public HandDrawnCheckRow strikeWhenChecked() {
+        strikeWhenChecked = true;
+        return this;
+    }
+
+    /** A small line under the label, in the muted colour or, when {@code warn}, in red. */
+    public HandDrawnCheckRow setSubtitle(CharSequence s, boolean warn) {
+        subtitle.setText(s);
+        subtitle.setTextColor(getContext().getColor(warn ? R.color.red : R.color.muted));
+        subtitle.setVisibility(s == null || s.length() == 0 ? View.GONE : View.VISIBLE);
+        return this;
     }
 
     /** Runs after the person taps the row (not when {@link #setChecked} is called from code). */

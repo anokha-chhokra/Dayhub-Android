@@ -1,5 +1,6 @@
 package app.dayhub;
 
+import android.app.Activity;
 import android.content.Context;
 import android.view.View;
 import android.view.ViewGroup;
@@ -7,40 +8,56 @@ import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
+import app.dayhub.data.DayHubData;
 
 /**
- * The app's main layout: a page area above a hand-drawn bottom navigation bar.
- * Pages are placeholders until their features are built; Home shows the hand-drawn widgets.
+ * The app's main layout: a page area above a hand-drawn bottom navigation bar. Home is the real
+ * dashboard; the other tabs are placeholders until their features are built.
  */
-public final class ShellScreen extends LinearLayout {
+public final class ShellScreen extends LinearLayout implements HomeScreen.Navigator {
     private static final String[] TABS = {"Home", "Tasks", "Habits", "Journal", "Spend"};
+    private static final String[] ROUTES = {"home", "tasks", "habits", "journal", "spend"};
 
+    private final Activity activity;
+    private final DayHubData data;
     private final Overlays overlays;
     private final DataTransfer transfer;
     private final FrameLayout pageHost;
     private final BottomNavBar nav;
+    private HomeScreen home;
     private int currentTab;
 
-    public ShellScreen(Context c, Overlays overlays, DataTransfer transfer) {
-        super(c);
+    public ShellScreen(Activity activity, DayHubData data, Overlays overlays, DataTransfer transfer) {
+        super(activity);
+        this.activity = activity;
+        this.data = data;
         this.overlays = overlays;
         this.transfer = transfer;
         setOrientation(VERTICAL);
 
-        pageHost = new FrameLayout(c);
+        pageHost = new FrameLayout(activity);
         addView(pageHost, new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
 
-        nav = new BottomNavBar(c, TABS);
+        nav = new BottomNavBar(activity, TABS);
         LayoutParams navParams = new LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        navParams.setMargins(Sketch.dp(c, 12), Sketch.dp(c, 4), Sketch.dp(c, 12), Sketch.dp(c, 8));
+        navParams.setMargins(Sketch.dp(activity, 12), Sketch.dp(activity, 4), Sketch.dp(activity, 12), Sketch.dp(activity, 8));
         addView(nav, navParams);
 
         nav.setListener(this::showPage);
         nav.select(0, true);
+    }
+
+    /** Opens the tab for a route such as "tasks" or "spend". Routes without a tab yet say so. */
+    @Override
+    public void go(String route) {
+        for (int i = 0; i < ROUTES.length; i++) {
+            if (ROUTES[i].equals(route)) {
+                nav.select(i, true);
+                return;
+            }
+        }
+        overlays.toast("That screen is coming soon");
     }
 
     /** Back from any tab other than Home returns to Home. Returns true when it was used. */
@@ -50,7 +67,7 @@ public final class ShellScreen extends LinearLayout {
         return true;
     }
 
-    /** Redraws the page being shown, e.g. after the data was replaced by a restore. */
+    /** Redraws the page being shown, e.g. after the app comes back to the front or data was restored. */
     public void refresh() {
         showPage(currentTab);
     }
@@ -58,109 +75,35 @@ public final class ShellScreen extends LinearLayout {
     private void showPage(int index) {
         currentTab = index;
         pageHost.removeAllViews();
-        pageHost.addView(page(index), new FrameLayout.LayoutParams(
+        if (index == 0) {
+            // One Home for the whole session, so a half-typed note is still there when you come back.
+            if (home == null) home = new HomeScreen(activity, data, overlays, transfer, this);
+            pageHost.addView(home, new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            home.refresh();
+            return;
+        }
+        pageHost.addView(placeholder(index), new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
     }
 
-    private View page(int index) {
+    private View placeholder(int index) {
         Context c = getContext();
         LinearLayout column = new LinearLayout(c);
         column.setOrientation(VERTICAL);
         column.setPadding(Sketch.dp(c, 20), Sketch.dp(c, 20), Sketch.dp(c, 20), Sketch.dp(c, 20));
-
         column.addView(Sketch.label(c, TABS[index], 32, true, R.color.ink));
-        column.addView(card(index), cardParams());
-        if (index == 0 && transfer != null) column.addView(dataCard(), cardParams());
+
+        HandDrawnCard card = new HandDrawnCard(c);
+        card.addView(Sketch.label(c, "Coming soon", 20, true, R.color.ink));
+        card.addView(Sketch.label(c, "This page is built in a later step.", 16, false, R.color.muted));
+        LayoutParams lp = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.topMargin = Sketch.dp(c, 16);
+        column.addView(card, lp);
 
         ScrollView scroll = new ScrollView(c);
         scroll.setFillViewport(true);
         scroll.addView(column);
         return scroll;
-    }
-
-    private LayoutParams cardParams() {
-        LayoutParams lp = new LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        lp.topMargin = Sketch.dp(getContext(), 16);
-        return lp;
-    }
-
-    private View card(int index) {
-        Context c = getContext();
-        HandDrawnCard card = new HandDrawnCard(c);
-        if (index != 0) {
-            card.addView(Sketch.label(c, "Coming soon", 20, true, R.color.ink));
-            card.addView(Sketch.label(c, "This page is built in a later step.", 16, false, R.color.muted));
-            return card;
-        }
-
-        card.addView(Sketch.label(c, "Hello there", 22, true, R.color.ink));
-        card.addView(Sketch.label(c, "Everything here is drawn by hand.", 16, false, R.color.muted));
-
-        LayoutParams fieldParams = new LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        fieldParams.topMargin = Sketch.dp(c, 14);
-        HandDrawnField field = new HandDrawnField(c, "Jot something down");
-        card.addView(field, fieldParams);
-
-        HandDrawnButton add = new HandDrawnButton(c, "Add", true);
-        add.setOnClickListener(v -> overlays.toast(field.getText().length() == 0
-                ? "Write something first" : "Saved"));
-        HandDrawnButton clear = new HandDrawnButton(c, "Clear", false);
-        clear.setOnClickListener(v -> {
-            CharSequence old = field.getText().toString();
-            if (old.length() == 0) return;
-            field.setText("");
-            overlays.toast("Cleared", () -> field.setText(old));
-        });
-        card.addView(buttonRow(c, add, clear), rowParams(c));
-
-        HandDrawnButton date = new HandDrawnButton(c, "Date", false);
-        date.setOnClickListener(v -> DateTimePickers.pickDate(overlays, c, LocalDate.now(),
-                d -> overlays.toast(d.format(DateTimeFormatter.ofPattern("d MMM yyyy")))));
-        HandDrawnButton time = new HandDrawnButton(c, "Time", false);
-        time.setOnClickListener(v -> DateTimePickers.pickTime(overlays, c, LocalTime.now(),
-                t -> overlays.toast(t.format(DateTimeFormatter.ofPattern("HH:mm")))));
-        card.addView(buttonRow(c, date, time), rowParams(c));
-        return card;
-    }
-
-    /** Export and restore, until the Settings screen takes these over. */
-    private View dataCard() {
-        Context c = getContext();
-        HandDrawnCard card = new HandDrawnCard(c);
-        card.addView(Sketch.label(c, "Your data", 22, true, R.color.ink));
-        card.addView(Sketch.label(c, "Save a copy, or restore one.", 16, false, R.color.muted));
-
-        HandDrawnButton backup = new HandDrawnButton(c, "Backup", true);
-        backup.setOnClickListener(v -> transfer.exportBackup());
-        HandDrawnButton restore = new HandDrawnButton(c, "Restore\u2026", false);
-        restore.setOnClickListener(v -> transfer.restoreFromFile(this::refresh));
-        card.addView(buttonRow(c, backup, restore), rowParams(c));
-
-        HandDrawnButton csv = new HandDrawnButton(c, "Expenses CSV", false);
-        csv.setOnClickListener(v -> transfer.exportExpenses(null));
-        HandDrawnButton journal = new HandDrawnButton(c, "Journal", false);
-        journal.setOnClickListener(v -> transfer.exportJournal());
-        card.addView(buttonRow(c, csv, journal), rowParams(c));
-        return card;
-    }
-
-    private LinearLayout buttonRow(Context c, View first, View second) {
-        LinearLayout row = new LinearLayout(c);
-        row.setOrientation(HORIZONTAL);
-        LayoutParams gap = new LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        gap.rightMargin = Sketch.dp(c, 12);
-        row.addView(first, gap);
-        row.addView(second);
-        return row;
-    }
-
-    private LayoutParams rowParams(Context c) {
-        LayoutParams lp = new LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        lp.topMargin = Sketch.dp(c, 14);
-        return lp;
     }
 }
