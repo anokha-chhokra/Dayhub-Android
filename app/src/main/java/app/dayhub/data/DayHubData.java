@@ -828,6 +828,18 @@ public final class DayHubData {
         return link.copy();
     }
 
+    /**
+     * Chooses the link Home plays from an id as it arrives in a request: missing or null clears it,
+     * anything else must be a valid id of a saved link.
+     */
+    public void chooseMusic(Object idInput) {
+        if (missing(idInput)) {
+            setCurrentMusic(null);
+            return;
+        }
+        setCurrentMusic(Validate.id(idInput));
+    }
+
     /** Chooses the link Home plays; null clears it. */
     public void setCurrentMusic(Integer id) {
         if (id != null && getMusic(id) == null) throw notFound("Link not found");

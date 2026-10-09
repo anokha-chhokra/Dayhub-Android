@@ -79,7 +79,7 @@ public final class HomeScreen extends ScrollView {
         column.addView(journal, tileParams());
         spend = tile(column);
         column.addView(focusTile(), tileParams());
-        music = new MusicTile(activity, data, overlays, refresh);
+        music = new MusicTile(activity, data, overlays, refresh, () -> navigator.go("music"));
         column.addView(music, tileParams());
         if (transfer != null) column.addView(dataTile(), tileParams());
     }

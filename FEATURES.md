@@ -24,7 +24,7 @@ A native, offline Java app: no WebView, no network, no INTERNET permission. Tick
 - [x] 15. Habits: check, goal and limit habits, week view
 - [x] 16. Journal: daily timeline entries with mood and tags
 - [x] 17. Spend: expenses, categories, budget, month totals
-- [ ] 18. Music: saved YouTube links that open in the YouTube app or browser (no in-app player)
+- [x] 18. Music: saved YouTube links that open in the YouTube app or browser (no in-app player)
 - [ ] 19. Settings: profile, currency, reminders, backup, focus, notifications
 
 ## Backup

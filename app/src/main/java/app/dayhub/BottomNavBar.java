@@ -27,10 +27,10 @@ public final class BottomNavBar extends LinearLayout {
             final int index = i;
             TextView t = new TextView(c);
             t.setText(labels[i]);
-            t.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+            t.setTextSize(TypedValue.COMPLEX_UNIT_SP, labels.length > 5 ? 12 : 14);
             t.setGravity(Gravity.CENTER);
             t.setSingleLine(true);
-            t.setPadding(Sketch.dp(c, 2), Sketch.dp(c, 12), Sketch.dp(c, 2), Sketch.dp(c, 12));
+            t.setPadding(Sketch.dp(c, 1), Sketch.dp(c, 12), Sketch.dp(c, 1), Sketch.dp(c, 12));
             t.setClickable(true);
             t.setOnClickListener(v -> select(index, true));
             addView(t, new LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f));

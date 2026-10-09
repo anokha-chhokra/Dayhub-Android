@@ -15,8 +15,8 @@ import app.dayhub.data.DayHubData;
  * dashboard; the other tabs are placeholders until their features are built.
  */
 public final class ShellScreen extends LinearLayout implements HomeScreen.Navigator {
-    private static final String[] TABS = {"Home", "Tasks", "Habits", "Journal", "Spend"};
-    private static final String[] ROUTES = {"home", "tasks", "habits", "journal", "spend"};
+    private static final String[] TABS = {"Home", "Tasks", "Habits", "Journal", "Spend", "Music"};
+    private static final String[] ROUTES = {"home", "tasks", "habits", "journal", "spend", "music"};
 
     private final Activity activity;
     private final DayHubData data;
@@ -33,6 +33,7 @@ public final class ShellScreen extends LinearLayout implements HomeScreen.Naviga
     private HabitsScreen habitsScreen;
     private JournalScreen journalScreen;
     private SpendScreen spendScreen;
+    private MusicScreen musicScreen;
     private int currentTab;
 
     public ShellScreen(Activity activity, DayHubData data, Overlays overlays, DataTransfer transfer) {
@@ -123,6 +124,13 @@ public final class ShellScreen extends LinearLayout implements HomeScreen.Naviga
             pageHost.addView(spendScreen, new FrameLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
             spendScreen.refresh();
+            return;
+        }
+        if (index == 5) {
+            if (musicScreen == null) musicScreen = new MusicScreen(activity, data, overlays, this::refresh);
+            pageHost.addView(musicScreen, new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            musicScreen.refresh();
             return;
         }
         pageHost.addView(placeholder(index), new FrameLayout.LayoutParams(

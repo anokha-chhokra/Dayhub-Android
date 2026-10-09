@@ -19,15 +19,17 @@ public final class MusicTile extends HandDrawnCard {
     private final DayHubData data;
     private final Overlays overlays;
     private final Runnable onChanged;
+    private final Runnable openSaved;
     private final HandDrawnField link;
     private String shownKey; // what the tile currently shows, so an unchanged tile is not rebuilt
 
-    public MusicTile(Activity activity, DayHubData data, Overlays overlays, Runnable onChanged) {
+    public MusicTile(Activity activity, DayHubData data, Overlays overlays, Runnable onChanged, Runnable openSaved) {
         super(activity);
         this.activity = activity;
         this.data = data;
         this.overlays = overlays;
         this.onChanged = onChanged;
+        this.openSaved = openSaved;
         link = new HandDrawnField(activity, "Paste a YouTube link");
         link.setSingleLine(true);
         link.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
@@ -47,7 +49,15 @@ public final class MusicTile extends HandDrawnCard {
         if (key.equals(shownKey)) return;
         shownKey = key;
         removeAllViews();
-        addView(Sketch.label(activity, "Music", 22, true, R.color.ink));
+        LinearLayout title = new LinearLayout(activity);
+        title.setOrientation(LinearLayout.HORIZONTAL);
+        title.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        title.addView(Sketch.label(activity, "Music", 22, true, R.color.ink),
+                new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        HandDrawnButton saved = new HandDrawnButton(activity, "Saved", false);
+        saved.setOnClickListener(v -> openSaved.run());
+        title.addView(saved);
+        addView(title);
         if (current != null) {
             addView(Sketch.label(activity, current.label, 16, false, R.color.muted), rowParams(8));
             HandDrawnButton open = new HandDrawnButton(activity, "Open in YouTube", false);
