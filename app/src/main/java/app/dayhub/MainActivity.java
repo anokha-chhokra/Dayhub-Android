@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.widget.FrameLayout;
 
+import app.dayhub.data.AutoBackup;
 import app.dayhub.data.DayHubData;
 
 import java.util.function.BooleanSupplier;
@@ -17,6 +18,7 @@ public class MainActivity extends Activity {
     private ShellScreen shell;
     private DayHubData data;
     private BooleanSupplier backHandler;
+    private AutoBackup autoBackup;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,6 +29,10 @@ public class MainActivity extends Activity {
         // Open the saved data; if it is unusable the damaged-data screen is shown instead.
         DataGate.open(this, content, overlays, results, opened -> {
             data = opened;
+            // Keep the backup file current: a moment after each save, and when the app is left.
+            autoBackup = new AutoBackup(opened, new BackupFileSink(new BackupFile(this, new BackupPrefs(this))),
+                    new HandlerScheduler());
+            opened.setOnCommitted(autoBackup::noteChange);
             DataTransfer transfer = new DataTransfer(this, overlays, results, opened);
             // First run: ask a few questions before showing the app.
             SetupWizard.showIfNeeded(this, content, transfer, opened, () -> {
@@ -51,6 +57,13 @@ public class MainActivity extends Activity {
         if (!results.dispatchPermission(requestCode, grantResults)) {
             super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         }
+    }
+
+    /** Leaving the app: write any changes to the backup file now, before the phone may stop us. */
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (autoBackup != null) autoBackup.flushNow();
     }
 
     /** Coming back to the app: times and counts on Home may have moved on. */

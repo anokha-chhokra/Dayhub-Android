@@ -6,6 +6,7 @@ import android.text.format.DateUtils;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 
+import app.dayhub.data.BackupRunner;
 import app.dayhub.data.DayHubData;
 
 import java.io.IOException;
@@ -83,8 +84,14 @@ public final class BackupCard extends HandDrawnCard {
             addView(Sketch.label(activity, "Not backed up yet.", 14, false, R.color.muted), rowParams(4));
         }
 
+        HandDrawnCheckRow auto = new HandDrawnCheckRow(activity, "Back up automatically after changes and when I leave the app");
+        auto.setChecked(prefs.auto());
+        auto.setOnChange(() -> prefs.setAuto(auto.isChecked()));
+        addView(auto, rowParams(10));
+
         addView(button("Back up now", true, this::backUp), rowParams(12));
         addView(button("Restore from this file", false, () -> transfer.restoreFromUri(file.uri(), prefs.name(), onChanged)), rowParams(10));
+        addView(button("Restore from another file\u2026", false, () -> transfer.restoreFromFile(onChanged)), rowParams(10));
         addView(button("New file…", false, () -> choose(true)), rowParams(10));
         addView(button("Use an existing file…", false, () -> choose(false)), rowParams(10));
         addView(button("Stop using this file", false, () -> {
@@ -155,9 +162,9 @@ public final class BackupCard extends HandDrawnCard {
 
     private void backUp() {
         try {
-            BackupRunner.Result r = BackupRunner.run(data, file, true);
+            BackupRunner.Result r = BackupRunner.run(data, new BackupFileSink(file), true);
             if (r.skipped) overlays.toast("Skipped: Day Hub is empty and the backup file already has data.");
-            else overlays.toast("Backed up (" + kb(r.written.bytes) + ")");
+            else overlays.toast("Backed up (" + kb(r.bytes) + ")");
         } catch (IOException e) {
             overlays.toast(e.getMessage());
         }

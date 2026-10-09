@@ -40,6 +40,7 @@ public final class DayHubData {
     private State state;
     private boolean dirty;
     private String lastRaw; // exactly what is saved right now; null when nothing is
+    private Runnable onCommitted;
 
     private DayHubData(DataStore file, State state, String lastRaw) {
         this.file = file;
@@ -119,6 +120,12 @@ public final class DayHubData {
         }
         lastRaw = text;
         dirty = false;
+        if (onCommitted != null) onCommitted.run();
+    }
+
+    /** Runs after every save that actually wrote something (not for a clean commit, and not when a save failed). */
+    public void setOnCommitted(Runnable onCommitted) {
+        this.onCommitted = onCommitted;
     }
 
     /**

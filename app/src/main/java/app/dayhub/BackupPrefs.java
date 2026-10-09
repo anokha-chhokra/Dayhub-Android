@@ -23,6 +23,15 @@ public final class BackupPrefs {
         return p.getString("backup.name", null);
     }
 
+    /** Whether to back up automatically after changes and when leaving the app. On unless turned off. */
+    public boolean auto() {
+        return p.getBoolean("backup.auto", true);
+    }
+
+    public void setAuto(boolean on) {
+        p.edit().putBoolean("backup.auto", on).apply();
+    }
+
     /** Size of the file's content after the last backup (or when it was chosen). */
     public long bytes() {
         return p.getLong("backup.bytes", 0);
