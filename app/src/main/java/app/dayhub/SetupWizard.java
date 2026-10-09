@@ -31,7 +31,7 @@ import java.util.Set;
  * already has a backup file can restore it instead.
  */
 public final class SetupWizard {
-    private static final String[][] CURRENCIES = {
+    static final String[][] CURRENCIES = {
         {"INR", "₹ Indian rupee"}, {"USD", "$ US dollar"}, {"EUR", "€ Euro"},
         {"GBP", "£ British pound"}, {"AED", "AED Dirham"}, {"SGD", "S$ Singapore dollar"},
     };
@@ -50,8 +50,7 @@ public final class SetupWizard {
     private String currency = "INR";
     private String budget = "";
     private String musicUrl = "";
-    private final Set<String> habits = new LinkedHashSet<>(
-            java.util.Arrays.asList("water", "steps", "workout", "coffee"));
+    private final Set<String> habits = new LinkedHashSet<>();
     private int step;
     private boolean saving;
     private String error = "";
@@ -66,6 +65,12 @@ public final class SetupWizard {
         new SetupWizard(activity, content, transfer, data, onReady).show();
     }
 
+    /** Runs the setup again (from Settings), whether or not it was done before. */
+    public static void run(MainActivity activity, FrameLayout content, DataTransfer transfer,
+                           DayHubData data, Runnable onReady) {
+        new SetupWizard(activity, content, transfer, data, onReady).show();
+    }
+
     private SetupWizard(MainActivity activity, FrameLayout content, DataTransfer transfer,
                         DayHubData data, Runnable onReady) {
         this.activity = activity;
@@ -73,7 +78,13 @@ public final class SetupWizard {
         this.transfer = transfer;
         this.data = data;
         this.onReady = onReady;
-        this.name = data.getSettings().name;
+        // Start from what is already saved. A first run suggests four habits; running setup again adds none.
+        app.dayhub.data.Model.Settings saved = data.getSettings();
+        this.name = saved.name;
+        this.currency = saved.currency;
+        long minor = saved.monthlyBudgetMinor;
+        this.budget = minor == 0 ? "" : minor % 100 == 0 ? String.valueOf(minor / 100) : MoneyFormat.decimal(minor);
+        if (!saved.setupDone) habits.addAll(java.util.Arrays.asList("water", "steps", "workout", "coffee"));
 
         root = new ScrollView(activity);
         root.setFillViewport(true);
@@ -190,6 +201,7 @@ public final class SetupWizard {
         label("What should I call you?", null);
         field("Your name", name, InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS
                 | InputType.TYPE_TEXT_VARIATION_PERSON_NAME, 40, t -> name = t);
+        if (data.getSettings().setupDone) return; // restoring is only offered on the very first run
         HandDrawnButton restore = new HandDrawnButton(activity, "I already have a backup file", false);
         restore.setOnClickListener(v -> transfer.restoreFromFile(() -> {
             if (data.getSettings().setupDone) close();

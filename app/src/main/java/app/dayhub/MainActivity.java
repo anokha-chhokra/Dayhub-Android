@@ -30,7 +30,7 @@ public class MainActivity extends Activity {
             DataTransfer transfer = new DataTransfer(this, overlays, results, opened);
             // First run: ask a few questions before showing the app.
             SetupWizard.showIfNeeded(this, content, transfer, opened, () -> {
-                shell = new ShellScreen(this, opened, overlays, transfer);
+                shell = new ShellScreen(this, opened, overlays, results, transfer);
                 content.addView(shell);
             });
         });
@@ -44,6 +44,13 @@ public class MainActivity extends Activity {
     /** The opened data, or null while the damaged-data screen is showing. */
     public DayHubData data() {
         return data;
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        if (!results.dispatchPermission(requestCode, grantResults)) {
+            super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        }
     }
 
     /** Coming back to the app: times and counts on Home may have moved on. */

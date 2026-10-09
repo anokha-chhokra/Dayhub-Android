@@ -18,7 +18,11 @@ public final class ShellScreen extends LinearLayout implements HomeScreen.Naviga
     private static final String[] TABS = {"Home", "Tasks", "Habits", "Journal", "Spend", "Music"};
     private static final String[] ROUTES = {"home", "tasks", "habits", "journal", "spend", "music"};
 
+    private static final int SETTINGS_PAGE = 6;
+
     private final Activity activity;
+    private final MainActivity main;
+    private final ActivityResults results;
     private final DayHubData data;
     private final Overlays overlays;
     private final DataTransfer transfer;
@@ -34,11 +38,15 @@ public final class ShellScreen extends LinearLayout implements HomeScreen.Naviga
     private JournalScreen journalScreen;
     private SpendScreen spendScreen;
     private MusicScreen musicScreen;
+    private SettingsScreen settingsScreen;
     private int currentTab;
 
-    public ShellScreen(Activity activity, DayHubData data, Overlays overlays, DataTransfer transfer) {
+    public ShellScreen(MainActivity activity, DayHubData data, Overlays overlays, ActivityResults results,
+                       DataTransfer transfer) {
         super(activity);
         this.activity = activity;
+        this.main = activity;
+        this.results = results;
         this.data = data;
         this.overlays = overlays;
         this.transfer = transfer;
@@ -64,6 +72,11 @@ public final class ShellScreen extends LinearLayout implements HomeScreen.Naviga
     /** Opens the tab for a route such as "tasks" or "spend". Routes without a tab yet say so. */
     @Override
     public void go(String route) {
+        if (route.equals("settings")) {
+            nav.clearSelection(); // Settings is not one of the tabs
+            showPage(SETTINGS_PAGE);
+            return;
+        }
         for (int i = 0; i < ROUTES.length; i++) {
             if (ROUTES[i].equals(route)) {
                 nav.select(i, true);
@@ -92,7 +105,7 @@ public final class ShellScreen extends LinearLayout implements HomeScreen.Naviga
         pageHost.removeAllViews();
         if (index == 0) {
             // One Home for the whole session, so a half-typed note is still there when you come back.
-            if (home == null) home = new HomeScreen(activity, data, overlays, transfer, taskActions, journalActions, expenseActions, this);
+            if (home == null) home = new HomeScreen(activity, data, overlays, taskActions, journalActions, expenseActions, this);
             pageHost.addView(home, new FrameLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
             home.refresh();
@@ -131,6 +144,13 @@ public final class ShellScreen extends LinearLayout implements HomeScreen.Naviga
             pageHost.addView(musicScreen, new FrameLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
             musicScreen.refresh();
+            return;
+        }
+        if (index == SETTINGS_PAGE) {
+            if (settingsScreen == null) settingsScreen = new SettingsScreen(main, data, overlays, results, transfer, this::refresh);
+            pageHost.addView(settingsScreen, new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            settingsScreen.refresh();
             return;
         }
         pageHost.addView(placeholder(index), new FrameLayout.LayoutParams(

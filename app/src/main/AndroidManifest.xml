@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- No permissions on purpose: the app works offline and never touches the network. -->
+    <!-- No network permission on purpose: the app works offline and never touches the network.
+         The one permission is for showing reminder notifications (asked for only when you turn them on). -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:allowBackup="false"

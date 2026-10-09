@@ -35,7 +35,6 @@ public final class HomeScreen extends ScrollView {
     private final Activity activity;
     private final DayHubData data;
     private final Overlays overlays;
-    private final DataTransfer transfer;
     private final TaskActions taskActions;
     private final JournalActions journalActions;
     private final ExpenseActions expenseActions;
@@ -49,14 +48,13 @@ public final class HomeScreen extends ScrollView {
     private final MusicTile music;
     private final Runnable refresh = this::refresh;
 
-    public HomeScreen(Activity activity, DayHubData data, Overlays overlays, DataTransfer transfer,
+    public HomeScreen(Activity activity, DayHubData data, Overlays overlays,
                       TaskActions taskActions, JournalActions journalActions, ExpenseActions expenseActions,
                       Navigator navigator) {
         super(activity);
         this.activity = activity;
         this.data = data;
         this.overlays = overlays;
-        this.transfer = transfer;
         this.taskActions = taskActions;
         this.journalActions = journalActions;
         this.expenseActions = expenseActions;
@@ -81,7 +79,6 @@ public final class HomeScreen extends ScrollView {
         column.addView(focusTile(), tileParams());
         music = new MusicTile(activity, data, overlays, refresh, () -> navigator.go("music"));
         column.addView(music, tileParams());
-        if (transfer != null) column.addView(dataTile(), tileParams());
     }
 
     private HandDrawnCard tile(LinearLayout column) {
@@ -140,11 +137,25 @@ public final class HomeScreen extends ScrollView {
 
     private void drawHead(HomeData home) {
         head.removeAllViews();
-        head.addView(Sketch.label(activity, DateLabels.weekdayDate(activity), 15, false, R.color.muted));
-        head.addView(Sketch.label(activity, DateLabels.greeting(home.name), 30, true, R.color.ink));
-        String streak = home.stats.streak > 0 ? "🔥 " + home.stats.streak + "-day streak · " : "";
-        head.addView(Sketch.label(activity, streak + home.stats.totalPoints + " points", 16, false, R.color.muted),
+        LinearLayout row = new LinearLayout(activity);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.TOP);
+
+        LinearLayout text = new LinearLayout(activity);
+        text.setOrientation(LinearLayout.VERTICAL);
+        text.addView(Sketch.label(activity, DateLabels.weekdayDate(activity), 15, false, R.color.muted));
+        text.addView(Sketch.label(activity, DateLabels.greeting(home.name), 30, true, R.color.ink));
+        String streak = home.stats.streak > 0 ? "\uD83D\uDD25 " + home.stats.streak + "-day streak \u00B7 " : "";
+        text.addView(Sketch.label(activity, streak + home.stats.totalPoints + " points", 16, false, R.color.muted),
                 rowParams(4));
+        row.addView(text, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+
+        TextView gear = Sketch.label(activity, "\u2699\uFE0F", 26, false, R.color.ink);
+        gear.setContentDescription("Settings");
+        gear.setPadding(Sketch.dp(activity, 12), Sketch.dp(activity, 6), Sketch.dp(activity, 4), Sketch.dp(activity, 6));
+        gear.setOnClickListener(v -> navigator.go("settings"));
+        row.addView(gear);
+        head.addView(row);
     }
 
     // ---------- needs attention ----------
@@ -292,34 +303,5 @@ public final class HomeScreen extends ScrollView {
         card.addView(Sketch.label(activity,
                 "A pocket stopwatch to keep you on one thing. Coming soon.", 16, false, R.color.muted), rowParams(8));
         return card;
-    }
-
-    // ---------- backup tools (until Settings takes them over) ----------
-
-    private View dataTile() {
-        HandDrawnCard card = new HandDrawnCard(activity);
-        card.addView(Sketch.label(activity, "Your data", 22, true, R.color.ink));
-        card.addView(Sketch.label(activity, "Save a copy, or restore one.", 16, false, R.color.muted), rowParams(6));
-        card.addView(buttonRow("Backup", true, transfer::exportBackup,
-                "Restore…", false, () -> transfer.restoreFromFile(this::refresh)), rowParams(14));
-        card.addView(buttonRow("Expenses CSV", false, () -> transfer.exportExpenses(null),
-                "Journal", false, transfer::exportJournal), rowParams(10));
-        return card;
-    }
-
-    private View buttonRow(String firstLabel, boolean firstPrimary, Runnable first,
-                           String secondLabel, boolean secondPrimary, Runnable second) {
-        LinearLayout row = new LinearLayout(activity);
-        row.setOrientation(LinearLayout.HORIZONTAL);
-        HandDrawnButton a = new HandDrawnButton(activity, firstLabel, firstPrimary);
-        a.setOnClickListener(v -> first.run());
-        HandDrawnButton b = new HandDrawnButton(activity, secondLabel, secondPrimary);
-        b.setOnClickListener(v -> second.run());
-        LinearLayout.LayoutParams gap = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        gap.rightMargin = Sketch.dp(activity, 12);
-        row.addView(a, gap);
-        row.addView(b);
-        return row;
     }
 }

@@ -43,6 +43,12 @@ public final class BottomNavBar extends LinearLayout {
         this.listener = listener;
     }
 
+    /** Deselects every tab, for a screen that is not one of them (Settings). */
+    public void clearSelection() {
+        if (selected >= 0) style(selected, false);
+        selected = -1;
+    }
+
     public void select(int index, boolean notify) {
         if (index == selected) return;
         if (selected >= 0) style(selected, false);
