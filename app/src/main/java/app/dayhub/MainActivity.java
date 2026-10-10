@@ -33,12 +33,14 @@ public class MainActivity extends Activity {
         DataGate.open(this, content, overlays, results, opened -> {
             data = opened;
             OpenData.set(opened); // widget taps must change this same copy
+            ReminderScheduler.request(this);
             // Keep the backup file current: a moment after each save, and when the app is left.
             autoBackup = new AutoBackup(opened, new BackupFileSink(new BackupFile(this, new BackupPrefs(this))),
                     new HandlerScheduler());
             opened.setOnCommitted(() -> {
                 autoBackup.noteChange();
                 WidgetUpdater.request(this); // the widgets read the same data
+                ReminderScheduler.request(this); // so does the reminder alarm
             });
             DataTransfer transfer = new DataTransfer(this, overlays, results, opened);
             // First run: ask a few questions before showing the app.

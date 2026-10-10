@@ -5,6 +5,9 @@
          Notifications (asked for when needed) show reminders and the focus timer. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- Reminders: set again after a restart; and on time where the phone allows exact alarms. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <!-- Optional, granted by the person in Settings: lets the focus guard bring Day Hub back to the front faster. -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
@@ -60,6 +63,19 @@
         <receiver
             android:name=".FocusEndReceiver"
             android:exported="false" />
+
+        <!-- Reminders: the alarm for the next one, and setting everything again after a restart or an update. -->
+        <receiver
+            android:name=".ReminderReceiver"
+            android:exported="false" />
+        <receiver
+            android:name=".BootReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
 
         <!-- Home-screen widgets. They read Day Hub's saved data directly. -->
         <receiver

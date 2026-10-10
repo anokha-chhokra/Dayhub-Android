@@ -6,10 +6,14 @@ import android.content.Intent;
 
 import app.dayhub.widgets.WidgetUpdater;
 
-/** Feature 27: redraws the widgets when the date, the time or the time zone changes, so "today" is never yesterday's. */
+/**
+ * Features 27 and 29: when the date, the time or the time zone changes (and so at midnight) the widgets are redrawn,
+ * so "today" is never yesterday's, and the reminder alarm is worked out again for the new day.
+ */
 public class WidgetRefreshReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         WidgetUpdater.updateAll(context);
+        ReminderScheduler.reschedule(context);
     }
 }

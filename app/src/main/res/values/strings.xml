@@ -10,6 +10,8 @@
     <string name="focus_done">Focus complete</string>
     <string name="focus_done_text">Nice work. Your phone is unlocked again.</string>
 
+    <string name="channel_reminders">Reminders</string>
+
     <!-- The focus guard (an accessibility service) -->
     <string name="focus_blocks_links">Links are off while focus mode is on.</string>
     <string name="guard_label">Day Hub focus guard</string>

@@ -199,6 +199,8 @@ public final class SettingsScreen extends ScrollView {
         notifications.setChecked(s.notifications);
         notifications.setOnChange(() -> setNotifications(notifications));
         card.addView(notifications, rowParams(10));
+        card.addView(hint("Reminders always show inside Day Hub while it is open. With this on they also arrive as "
+                + "notifications when it is closed, and are set again after the phone restarts and each midnight."), rowParams(6));
 
         HandDrawnButton save = new HandDrawnButton(activity, "Save", true);
         save.setOnClickListener(v -> saveReminder());

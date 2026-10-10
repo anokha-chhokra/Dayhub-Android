@@ -41,6 +41,7 @@ public final class ShellScreen extends LinearLayout implements HomeScreen.Naviga
     private MusicScreen musicScreen;
     private SettingsScreen settingsScreen;
     private int currentTab;
+    private final InAppReminders reminders;
 
     public ShellScreen(MainActivity activity, DayHubData data, Overlays overlays, ActivityResults results,
                        DataTransfer transfer) {
@@ -52,6 +53,7 @@ public final class ShellScreen extends LinearLayout implements HomeScreen.Naviga
         this.overlays = overlays;
         this.transfer = transfer;
         setOrientation(VERTICAL);
+        reminders = new InAppReminders(data, overlays);
         taskActions = new TaskActions(activity, data, overlays, this::refresh);
         habitActions = new HabitActions(activity, data, overlays, this::refresh);
         journalActions = new JournalActions(activity, data, overlays, this::refresh);
@@ -85,6 +87,18 @@ public final class ShellScreen extends LinearLayout implements HomeScreen.Naviga
             }
         }
         overlays.toast("That screen is coming soon");
+    }
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        reminders.start();
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        reminders.stop();
+        super.onDetachedFromWindow();
     }
 
     /**

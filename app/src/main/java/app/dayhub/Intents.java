@@ -25,6 +25,11 @@ public final class Intents {
         return i;
     }
 
+    /** A PendingIntent that opens Day Hub on a screen or job, e.g. from a notification. */
+    public static PendingIntent openPending(Context c, String target) {
+        return PendingIntent.getActivity(c, 0, open(c, target), PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+    }
+
     public static PendingIntent openPending(Context c) {
         return PendingIntent.getActivity(c, 0, open(c), PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
     }

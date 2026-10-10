@@ -41,7 +41,7 @@ A native, offline Java app: no WebView, no network, no INTERNET permission. Tick
 ## Widgets and reminders
 - [x] 27. Six home-screen widgets (Home, Tasks, Habits, Spend, Quick add, Focus) that read the app's data directly
 - [x] 28. Widget taps (tick a task, check a habit, add something) apply instantly
-- [ ] 29. Reminders as notifications, rescheduled after reboot and at midnight
+- [x] 29. Reminders as notifications, rescheduled after reboot and at midnight
 
 ## Quality
 - [ ] 30. Checks that match the Java engine and dial against the web app, plus a guard that fails the build if any network or WebView code appears
