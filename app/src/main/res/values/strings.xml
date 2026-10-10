@@ -1,4 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Day Hub</string>
+
+    <!-- Focus timer notifications -->
+    <string name="channel_focus">Focus timer</string>
+    <string name="channel_focus_done">Focus finished</string>
+    <string name="focus_running">Focus timer is running</string>
+    <string name="focus_running_text">Tap to return to Day Hub.</string>
+    <string name="focus_done">Focus complete</string>
+    <string name="focus_done_text">Nice work. Your focus time is up.</string>
 </resources>

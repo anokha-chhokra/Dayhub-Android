@@ -46,11 +46,12 @@ public final class HomeScreen extends ScrollView {
     private final QuickJournalTile journal;
     private final HandDrawnCard spend;
     private final MusicTile music;
+    private final FocusTile focus;
     private final Runnable refresh = this::refresh;
 
     public HomeScreen(Activity activity, DayHubData data, Overlays overlays,
                       TaskActions taskActions, JournalActions journalActions, ExpenseActions expenseActions,
-                      Navigator navigator) {
+                      ActivityResults results, Navigator navigator) {
         super(activity);
         this.activity = activity;
         this.data = data;
@@ -76,7 +77,8 @@ public final class HomeScreen extends ScrollView {
         journal = new QuickJournalTile(activity, data, overlays, journalActions, refresh, () -> navigator.go("journal"));
         column.addView(journal, tileParams());
         spend = tile(column);
-        column.addView(new FocusTile(activity), tileParams());
+        focus = new FocusTile(activity, overlays, results);
+        column.addView(focus, tileParams());
         music = new MusicTile(activity, data, overlays, refresh, () -> navigator.go("music"));
         column.addView(music, tileParams());
     }
@@ -105,6 +107,7 @@ public final class HomeScreen extends ScrollView {
 
     /** Recomputes everything from the stored data and redraws the tiles. */
     public void refresh() {
+        focus.refresh(); // a timer may have run out while the app was away
         HomeData home = HomeData.compute(data, Validate.localDate(), DateLabels.nowHHMM());
         drawHead(home);
         drawAttention(home);

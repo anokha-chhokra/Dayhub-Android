@@ -10,6 +10,7 @@ import android.graphics.RectF;
 import android.provider.Settings;
 import android.view.View;
 import android.view.animation.DecelerateInterpolator;
+import android.view.animation.LinearInterpolator;
 
 import app.dayhub.data.StopwatchMath;
 
@@ -18,6 +19,8 @@ import app.dayhub.data.StopwatchMath;
  * re-engraved for whatever length is set: a 25 minute focus gets numerals every 5 minutes and a tick for
  * each minute; 2 hours gets numerals every 20 minutes. The red hand sits at 12 and the yellow wedge is the
  * time still to come. When the length changes, the numerals fade in again and the hand makes one turn.
+ *
+ * Feature 24 adds running: {@link #setRun} makes the hand follow the clock, and the wedge shrinks behind it.
  *
  * It is drawn in a 240 x 262 box, like the web app's, and scaled to the width it is given.
  */
@@ -48,6 +51,16 @@ public final class StopwatchView extends View {
     private float numeralAlpha = 1f;
     private ValueAnimator turn;
     private ValueAnimator inkFade;
+    private ValueAnimator glide;
+    private ValueAnimator pressAnim;
+    private float crownDip; // how far the crown and pusher are pushed in, in dial units
+
+    // Running: the hand follows the clock from runStart to runEnd (epoch milliseconds).
+    private boolean running;
+    private long runStart;
+    private long runEnd;
+    private long minutesShown = -1;
+    private final Runnable tick = this::tickRun;
 
     public StopwatchView(Context c) {
         super(c);
@@ -78,6 +91,7 @@ public final class StopwatchView extends View {
         boolean first = plan == null;
         boolean changed = plan == null || plan.span != next.span;
         plan = next;
+        stopRun();
         cancelAnimations();
         handDeg = 0;
         wedgeDeg = 0;
@@ -107,13 +121,99 @@ public final class StopwatchView extends View {
     private void cancelAnimations() {
         if (turn != null) turn.cancel();
         if (inkFade != null) inkFade.cancel();
+        if (glide != null) glide.cancel();
         turn = null;
         inkFade = null;
+        glide = null;
+    }
+
+    // ---------- running ----------
+
+    /**
+     * Running: the hand follows the clock from {@code startedAt} to {@code endsAt} (epoch milliseconds),
+     * and the yellow wedge, the time still to come, shrinks behind it.
+     */
+    public void setRun(long startedAt, long endsAt) {
+        stopRun();
+        cancelAnimations();
+        runStart = startedAt;
+        runEnd = endsAt;
+        running = true;
+        minutesShown = -1;
+        long minutes = Math.max(1, Math.round((endsAt - startedAt) / 60000.0));
+        plan = StopwatchMath.dialPlan((int) Math.min(StopwatchMath.MAX_MINUTES, minutes));
+        numeralAlpha = 1f;
+        pointAt(System.currentTimeMillis());
+        if (isAttachedToWindow()) post(tick);
+    }
+
+    private void stopRun() {
+        running = false;
+        removeCallbacks(tick);
+    }
+
+    /** Puts the hand where the clock says it should be, without gliding. */
+    private void pointAt(long now) {
+        handDeg = wedgeDeg = (float) StopwatchMath.handDegrees(now - runStart, runEnd - runStart);
+        long left = Math.max(1, (long) Math.ceil((runEnd - now) / 60000.0));
+        if (left != minutesShown) {
+            minutesShown = left;
+            setContentDescription("Stopwatch, " + StopwatchMath.minutesLabel(left) + " left");
+        }
+        invalidate();
+    }
+
+    /** Once a second: glide the hand to where it will be a second from now. */
+    private void tickRun() {
+        if (!running) return;
+        long now = System.currentTimeMillis();
+        pointAt(now);
+        if (now < runEnd) {
+            float to = (float) StopwatchMath.handDegrees(now + 1000 - runStart, runEnd - runStart);
+            if (glide != null) glide.cancel();
+            if (!reducedMotion()) {
+                glide = ValueAnimator.ofFloat(handDeg, to);
+                glide.setDuration(1000);
+                glide.setInterpolator(new LinearInterpolator());
+                glide.addUpdateListener(a -> {
+                    handDeg = wedgeDeg = (float) a.getAnimatedValue();
+                    invalidate();
+                });
+                glide.start();
+            }
+            postDelayed(tick, 1000);
+        }
+    }
+
+    // ---------- pressing the crown ----------
+
+    /** The crown (and pusher) dip as if pressed, as the timer starts. */
+    public void press() {
+        if (reducedMotion()) return;
+        if (pressAnim != null) pressAnim.cancel();
+        pressAnim = ValueAnimator.ofFloat(0f, 1f);
+        pressAnim.setDuration(260);
+        pressAnim.addUpdateListener(a -> {
+            float t = (float) a.getAnimatedValue();
+            crownDip = 6f * (t < 0.45f ? t / 0.45f : (1f - t) / 0.55f);
+            invalidate();
+        });
+        pressAnim.start();
+    }
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        if (running) post(tick); // shown again after being away: catch up to the clock
     }
 
     @Override
     protected void onDetachedFromWindow() {
+        removeCallbacks(tick);
         cancelAnimations();
+        if (pressAnim != null) pressAnim.cancel();
+        pressAnim = null;
+        crownDip = 0f;
         super.onDetachedFromWindow();
     }
 
@@ -161,15 +261,19 @@ public final class StopwatchView extends View {
 
         c.save();
         c.rotate(42f, CX, CY);
+        c.translate(0f, crownDip);
         metalRect(c, 114f, 38f, 12f, 14f, 0f);
         metalRect(c, 109f, 30f, 22f, 14f, 4f);
         c.restore();
 
+        c.save();
+        c.translate(0f, crownDip);
         metalRect(c, 112f, 40f, 16f, 16f, 0f);
         metalRect(c, 105f, 28f, 30f, 18f, 4f);
         stroke.setColor(ink);
         stroke.setStrokeWidth(1.8f);
         for (float x : new float[] {112f, 120f, 128f}) c.drawLine(x, 31f, x, 43f, stroke);
+        c.restore();
 
         // The case and the face.
         solid(c, CX + 3f, CY + 4f, 100f, Color.argb(41, 27, 26, 23));

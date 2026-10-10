@@ -105,7 +105,7 @@ public final class ShellScreen extends LinearLayout implements HomeScreen.Naviga
         pageHost.removeAllViews();
         if (index == 0) {
             // One Home for the whole session, so a half-typed note is still there when you come back.
-            if (home == null) home = new HomeScreen(activity, data, overlays, taskActions, journalActions, expenseActions, this);
+            if (home == null) home = new HomeScreen(activity, data, overlays, taskActions, journalActions, expenseActions, results, this);
             pageHost.addView(home, new FrameLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
             home.refresh();
