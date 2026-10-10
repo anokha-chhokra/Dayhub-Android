@@ -33,3 +33,36 @@ android {
 dependencies {
     // Deliberately empty: Day Hub is plain framework Java, no libraries.
 }
+
+// The offline guard (feature 30). Day Hub never touches the network: no INTERNET permission, no WebView, no
+// networking code or library. This fails the build if any of that appears. The rules live in
+// buildSrc/src/main/java/app/dayhub/guard/NoNetworkGuard.java, which verify/run.sh also tests.
+tasks.register('checkNoNetwork') {
+    group = 'verification'
+    description = 'Fails the build if network code, a WebView, a network permission or a networking library appears.'
+    doLast {
+        def declared = []
+        configurations.matching { c ->
+            def n = c.name.toLowerCase()
+            !n.contains('test') && (n.endsWith('implementation') || n.endsWith('api') || n.endsWith('compileonly') || n.endsWith('runtimeonly'))
+        }.each { c ->
+            c.allDependencies.each { d -> declared << "${d.group}:${d.name}:${d.version}".toString() }
+        }
+        def problems = app.dayhub.guard.NoNetworkGuard.scan(rootProject.projectDir.toPath(), declared)
+        if (!problems.isEmpty()) {
+            throw new GradleException("Day Hub must stay offline, but ${problems.size()} problem(s) were found:\n" +
+                    app.dayhub.guard.NoNetworkGuard.report(problems))
+        }
+    }
+}
+tasks.named('preBuild') { dependsOn 'checkNoNetwork' }
+
+// The full set of checks against the web app (feature 30): the Java engine, the stopwatch dial, the focus rules, the
+// widgets and the reminders all compared with the web app's own code, plus the offline guard. Needs bash, Node.js and
+// the web app next to this project (or WEB_APP set); see verify/README.md. Not part of a normal build.
+tasks.register('verifyAgainstWebApp', Exec) {
+    group = 'verification'
+    description = 'Runs verify/run.sh: compares Day Hub with the web app and checks that it stays offline.'
+    workingDir = rootProject.projectDir
+    commandLine 'bash', 'verify/run.sh'
+}

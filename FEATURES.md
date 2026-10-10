@@ -44,4 +44,4 @@ A native, offline Java app: no WebView, no network, no INTERNET permission. Tick
 - [x] 29. Reminders as notifications, rescheduled after reboot and at midnight
 
 ## Quality
-- [ ] 30. Checks that match the Java engine and dial against the web app, plus a guard that fails the build if any network or WebView code appears
+- [x] 30. Checks that match the Java engine and dial against the web app, plus a guard that fails the build if any network or WebView code appears
