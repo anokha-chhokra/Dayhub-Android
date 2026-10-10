@@ -32,6 +32,7 @@ public class MainActivity extends Activity {
         // Open the saved data; if it is unusable the damaged-data screen is shown instead.
         DataGate.open(this, content, overlays, results, opened -> {
             data = opened;
+            OpenData.set(opened); // widget taps must change this same copy
             // Keep the backup file current: a moment after each save, and when the app is left.
             autoBackup = new AutoBackup(opened, new BackupFileSink(new BackupFile(this, new BackupPrefs(this))),
                     new HandlerScheduler());
@@ -72,6 +73,12 @@ public class MainActivity extends Activity {
         if (!results.dispatchPermission(requestCode, grantResults)) {
             super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         }
+    }
+
+    @Override
+    protected void onDestroy() {
+        OpenData.clear(data); // from now on a widget tap opens the file itself
+        super.onDestroy();
     }
 
     /** Leaving the app: write any changes to the backup file now, before the phone may stop us. */

@@ -22,8 +22,8 @@
     <string name="widget_quick_label">Day Hub: Quick add</string>
     <string name="widget_focus_label">Day Hub: Focus</string>
     <string name="widget_home_desc">Your whole Home screen: what needs attention, tasks, habits, spending and mood.</string>
-    <string name="widget_tasks_desc">Today’s open tasks. Tap one to open Tasks.</string>
-    <string name="widget_habits_desc">Today’s habits and how far along each is.</string>
+    <string name="widget_tasks_desc">Today’s open tasks. Tap the circle to tick one off.</string>
+    <string name="widget_habits_desc">Today’s habits with plus and minus buttons.</string>
     <string name="widget_spend_desc">This month’s spending against your budget.</string>
     <string name="widget_quick_desc">One tap to add a task, an expense or a note.</string>
     <string name="widget_focus_desc">Start a focus timer, or watch it count down.</string>

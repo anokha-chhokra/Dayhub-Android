@@ -8,13 +8,17 @@ import android.os.Build;
 
 import app.dayhub.WidgetActionActivity;
 
-/** Feature 27: the taps on widgets. All of them go through WidgetActionActivity, which decides what to do. */
+/** Features 27 and 28: the taps on widgets. All of them go through WidgetActionActivity, which decides what to do. */
 public final class WidgetIntents {
     public static final String ACTION = "app.dayhub.WIDGET_ACTION";
     public static final String EXTRA_ACT = "act";
     public static final String EXTRA_ID = "id";
     public static final String EXTRA_ARG = "arg";
 
+    public static final String ACT_TASK_DONE = "task.done";
+    public static final String ACT_HABIT_UP = "habit.up";
+    public static final String ACT_HABIT_DOWN = "habit.down";
+    public static final String ACT_MOOD = "mood";
     public static final String ACT_OPEN = "open";
     public static final String ACT_FOCUS = "focus.start";
 

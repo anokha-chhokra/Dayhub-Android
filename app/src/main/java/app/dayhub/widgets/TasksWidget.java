@@ -6,7 +6,7 @@ import android.widget.RemoteViews;
 import app.dayhub.R;
 import app.dayhub.data.WidgetSnapshot;
 
-/** Feature 27: today's open tasks. Tap one to open Tasks. */
+/** Features 27 and 28: today's open tasks. Tap the circle to tick one off; tap the text to open Tasks. */
 public class TasksWidget extends BaseWidget {
     @Override
     int listId() { return R.id.list; }

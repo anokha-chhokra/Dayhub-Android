@@ -6,7 +6,7 @@ import android.widget.RemoteViews;
 import app.dayhub.R;
 import app.dayhub.data.WidgetSnapshot;
 
-/** Feature 27: today's habits and how far along each is. */
+/** Features 27 and 28: today's habits with plus and minus buttons (a check habit switches on and off). */
 public class HabitsWidget extends BaseWidget {
     @Override
     int listId() { return R.id.list; }

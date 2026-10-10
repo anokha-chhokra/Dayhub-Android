@@ -94,7 +94,7 @@ public class WidgetListService extends RemoteViewsService {
             v.setTextViewText(R.id.task_sub, r.sub);
             v.setViewVisibility(R.id.task_sub, r.sub.isEmpty() ? View.GONE : View.VISIBLE);
             v.setTextColor(R.id.task_sub, r.flag ? RED : MUTED);
-            v.setOnClickFillInIntent(R.id.task_check, WidgetIntents.fill(WidgetIntents.ACT_OPEN, 0, "tasks"));
+            v.setOnClickFillInIntent(R.id.task_check, WidgetIntents.fill(WidgetIntents.ACT_TASK_DONE, r.id, null));
             v.setOnClickFillInIntent(R.id.task_text, WidgetIntents.fill(WidgetIntents.ACT_OPEN, 0, "tasks"));
             return v;
         }
@@ -110,8 +110,8 @@ public class WidgetListService extends RemoteViewsService {
             v.setViewVisibility(R.id.habit_bar, check ? View.GONE : View.VISIBLE);
             v.setViewVisibility(R.id.habit_minus, check ? View.GONE : View.VISIBLE);
             v.setTextViewText(R.id.habit_plus, check ? (r.done ? "✓" : "○") : "+");
-            v.setOnClickFillInIntent(R.id.habit_minus, WidgetIntents.fill(WidgetIntents.ACT_OPEN, 0, "habits"));
-            v.setOnClickFillInIntent(R.id.habit_plus, WidgetIntents.fill(WidgetIntents.ACT_OPEN, 0, "habits"));
+            v.setOnClickFillInIntent(R.id.habit_minus, WidgetIntents.fill(WidgetIntents.ACT_HABIT_DOWN, r.id, null));
+            v.setOnClickFillInIntent(R.id.habit_plus, WidgetIntents.fill(WidgetIntents.ACT_HABIT_UP, r.id, null));
             v.setOnClickFillInIntent(R.id.habit_text, WidgetIntents.fill(WidgetIntents.ACT_OPEN, 0, "habits"));
             return v;
         }
@@ -132,7 +132,7 @@ public class WidgetListService extends RemoteViewsService {
             int[] ids = { R.id.mood_1, R.id.mood_2, R.id.mood_3, R.id.mood_4, R.id.mood_5 };
             for (int i = 0; i < ids.length; i++) {
                 v.setTextViewText(ids[i], Moods.emoji(i + 1));
-                v.setOnClickFillInIntent(ids[i], WidgetIntents.fill(WidgetIntents.ACT_OPEN, 0, "home"));
+                v.setOnClickFillInIntent(ids[i], WidgetIntents.fill(WidgetIntents.ACT_MOOD, i + 1, null));
             }
             return v;
         }
