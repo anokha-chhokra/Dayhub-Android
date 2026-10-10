@@ -76,7 +76,7 @@ public final class HomeScreen extends ScrollView {
         journal = new QuickJournalTile(activity, data, overlays, journalActions, refresh, () -> navigator.go("journal"));
         column.addView(journal, tileParams());
         spend = tile(column);
-        column.addView(focusTile(), tileParams());
+        column.addView(new FocusTile(activity), tileParams());
         music = new MusicTile(activity, data, overlays, refresh, () -> navigator.go("music"));
         column.addView(music, tileParams());
     }
@@ -293,15 +293,5 @@ public final class HomeScreen extends ScrollView {
         }
         spend.addView(footer("Today: " + MoneyFormat.money(s.todayMinor, s.currency), "Details",
                 () -> navigator.go("spend")), rowParams(8));
-    }
-
-    // ---------- focus (placeholder until focus mode exists) ----------
-
-    private View focusTile() {
-        HandDrawnCard card = new HandDrawnCard(activity);
-        card.addView(Sketch.label(activity, "Focus", 22, true, R.color.ink));
-        card.addView(Sketch.label(activity,
-                "A pocket stopwatch to keep you on one thing. Coming soon.", 16, false, R.color.muted), rowParams(8));
-        return card;
     }
 }
