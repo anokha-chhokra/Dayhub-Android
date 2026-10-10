@@ -92,6 +92,8 @@ public class MainActivity extends Activity {
     public void onBackPressed() {
         if (overlays.handleBack()) return;
         if (backHandler != null && backHandler.getAsBoolean()) return;
-        if (!(shell != null && shell.handleBack())) super.onBackPressed();
+        if (shell != null && shell.handleBack()) return;
+        if (FocusState.isActive(this)) return; // never leave Day Hub during focus
+        super.onBackPressed();
     }
 }

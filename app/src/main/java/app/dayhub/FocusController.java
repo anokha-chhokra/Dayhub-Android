@@ -1,9 +1,15 @@
 package app.dayhub;
 
+import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ServiceInfo;
+import android.provider.Settings;
+import android.view.accessibility.AccessibilityManager;
+
+import java.util.List;
 
 import app.dayhub.data.FocusSession;
 
@@ -16,6 +22,23 @@ final class FocusController {
     private static final long ALARM_SLACK_MS = 2000;
 
     private FocusController() { }
+
+    /** True if Day Hub's focus guard is switched on in Android's Accessibility settings. */
+    static boolean guardEnabled(Context c) {
+        AccessibilityManager am = c.getSystemService(AccessibilityManager.class);
+        if (am == null) return false;
+        List<AccessibilityServiceInfo> on = am.getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK);
+        for (AccessibilityServiceInfo i : on) {
+            ServiceInfo si = i.getResolveInfo() == null ? null : i.getResolveInfo().serviceInfo;
+            if (si != null && c.getPackageName().equals(si.packageName) && FocusGuardService.class.getName().equals(si.name)) return true;
+        }
+        return false;
+    }
+
+    /** True if Day Hub may "Display over other apps", which lets the guard bring it back to the front most reliably. */
+    static boolean overlayGranted(Context c) {
+        return Settings.canDrawOverlays(c);
+    }
 
     static FocusSession start(Context c, int minutes, String label) {
         FocusSession s = FocusSession.start(System.currentTimeMillis(), minutes, label);

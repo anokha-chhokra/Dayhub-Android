@@ -70,6 +70,10 @@ public final class MusicScreen extends ScrollView {
     // ---------- opening a link ----------
 
     private void open(Music m) {
+        if (ExternalLinks.blockedByFocus(activity)) {
+            overlays.toast("Links are off while focus mode is on.");
+            return;
+        }
         if (!ExternalLinks.open(activity, m.url)) overlays.toast("No app found to open the link");
     }
 

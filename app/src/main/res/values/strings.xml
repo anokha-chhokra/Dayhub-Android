@@ -3,10 +3,15 @@
     <string name="app_name">Day Hub</string>
 
     <!-- Focus timer notifications -->
-    <string name="channel_focus">Focus timer</string>
+    <string name="channel_focus">Focus mode</string>
     <string name="channel_focus_done">Focus finished</string>
-    <string name="focus_running">Focus timer is running</string>
-    <string name="focus_running_text">Tap to return to Day Hub.</string>
+    <string name="focus_running">Focus mode is on</string>
+    <string name="focus_running_text">Day Hub, Messages and WhatsApp only. Tap to return.</string>
     <string name="focus_done">Focus complete</string>
-    <string name="focus_done_text">Nice work. Your focus time is up.</string>
+    <string name="focus_done_text">Nice work. Your phone is unlocked again.</string>
+
+    <!-- The focus guard (an accessibility service) -->
+    <string name="focus_blocks_links">Links are off while focus mode is on.</string>
+    <string name="guard_label">Day Hub focus guard</string>
+    <string name="guard_description">Used only while a Day Hub focus timer is running. It notices which app comes to the front so Day Hub can send you back unless it is Day Hub, Messages or WhatsApp. It cannot read what is on your screen.</string>
 </resources>

@@ -3,9 +3,7 @@ package app.dayhub;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.Context;
-import android.content.Intent;
 
 import app.dayhub.data.FocusSession;
 
@@ -34,14 +32,6 @@ final class FocusNotifications {
         return nm != null && nm.areNotificationsEnabled();
     }
 
-    private static PendingIntent openApp(Context c) {
-        Intent i = new Intent(c, MainActivity.class)
-                .setAction(Intent.ACTION_MAIN)
-                .addCategory(Intent.CATEGORY_LAUNCHER)
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-        return PendingIntent.getActivity(c, 0, i, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
-    }
-
     /** The ongoing notification with the time left counting down. Posting it again just updates it. */
     static void running(Context c, FocusSession s) {
         NotificationManager nm = c.getSystemService(NotificationManager.class);
@@ -51,7 +41,7 @@ final class FocusNotifications {
                 .setSmallIcon(R.drawable.ic_stat_focus)
                 .setContentTitle(c.getString(R.string.focus_running))
                 .setContentText(s.label.isEmpty() ? c.getString(R.string.focus_running_text) : s.label)
-                .setContentIntent(openApp(c))
+                .setContentIntent(Intents.openPending(c))
                 .setOngoing(true)
                 .setOnlyAlertOnce(true)
                 .setCategory(Notification.CATEGORY_STATUS)
@@ -84,7 +74,7 @@ final class FocusNotifications {
                 .setSmallIcon(R.drawable.ic_stat_focus)
                 .setContentTitle(c.getString(R.string.focus_done))
                 .setContentText(c.getString(R.string.focus_done_text))
-                .setContentIntent(openApp(c))
+                .setContentIntent(Intents.openPending(c))
                 .setCategory(Notification.CATEGORY_ALARM)
                 .setAutoCancel(true)
                 .build());

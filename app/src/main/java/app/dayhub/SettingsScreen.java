@@ -1,7 +1,10 @@
 package app.dayhub;
 
 import android.Manifest;
+import android.content.ActivityNotFoundException;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Build;
 import android.text.InputFilter;
 import android.text.InputType;
@@ -251,9 +254,47 @@ public final class SettingsScreen extends ScrollView {
     private View focusCard() {
         HandDrawnCard card = new HandDrawnCard(activity);
         card.addView(Sketch.label(activity, "Focus mode", 22, true, R.color.ink));
-        card.addView(hint("Focus mode keeps the phone on Day Hub, your messages and WhatsApp while a timer runs. "
-                + "It arrives in a later update, and its settings will be here."), rowParams(8));
+        card.addView(hint("While a focus timer runs, only Day Hub, Messages and WhatsApp can be used. Anything else you "
+                + "open is sent straight back to Day Hub. Incoming calls and the notification shade still work. "
+                + "The timer always ends by itself."), rowParams(8));
+        boolean guard = FocusController.guardEnabled(activity);
+        card.addView(Sketch.label(activity, guard ? "✅ Focus guard is on." : "⚠️ Focus guard is off, so focus mode cannot start.",
+                16, false, R.color.ink), rowParams(12));
+        boolean overlay = FocusController.overlayGranted(activity);
+        card.addView(hint(overlay ? "✅ Display over other apps is allowed (most reliable)."
+                : "Optional: allow Display over other apps so Day Hub can come back faster on phones that delay it."), rowParams(6));
+
+        HandDrawnButton accessibility = new HandDrawnButton(activity, "Accessibility settings", false);
+        accessibility.setOnClickListener(v -> openSystemScreen(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS));
+        card.addView(accessibility, rowParams(12));
+        if (!overlay) {
+            HandDrawnButton display = new HandDrawnButton(activity, "Allow display over apps", false);
+            display.setOnClickListener(v -> openSystemScreen(android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                    Uri.parse("package:" + activity.getPackageName())));
+            card.addView(display, rowParams(10));
+        }
+        HandDrawnButton again = new HandDrawnButton(activity, "Check again", false);
+        again.setOnClickListener(v -> refresh());
+        card.addView(again, rowParams(10));
+        card.addView(hint("If Android will not let you turn the guard on: on Android 13 and newer, an app installed from "
+                + "a file is blocked from accessibility until you allow it. Settings, Apps, Day Hub, the three-dot menu "
+                + "at the top right, Allow restricted settings. Then open Accessibility, find Day Hub focus guard and "
+                + "turn it on."), rowParams(12));
         return card;
+    }
+
+    private void openSystemScreen(String action) {
+        openSystemScreen(action, null);
+    }
+
+    private void openSystemScreen(String action, Uri data) {
+        try {
+            Intent i = new Intent(action);
+            if (data != null) i.setData(data);
+            activity.startActivity(i);
+        } catch (ActivityNotFoundException e) {
+            overlays.toast("This phone has no screen for that.");
+        }
     }
 
     // ---------- Your data ----------

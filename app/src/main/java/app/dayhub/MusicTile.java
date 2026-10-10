@@ -75,6 +75,10 @@ public final class MusicTile extends HandDrawnCard {
     }
 
     private void openLink(Music m) {
+        if (ExternalLinks.blockedByFocus(activity)) {
+            overlays.toast("Links are off while focus mode is on.");
+            return;
+        }
         if (!ExternalLinks.open(activity, m.url)) overlays.toast("No app found to open the link");
     }
 

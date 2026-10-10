@@ -2,12 +2,15 @@ package app.dayhub;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.ActivityNotFoundException;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
+import android.provider.Settings;
 import android.text.Editable;
 import android.text.InputFilter;
 import android.text.InputType;
@@ -25,10 +28,12 @@ import app.dayhub.data.FocusSession;
 import app.dayhub.data.StopwatchMath;
 
 /**
- * Features 23 and 24: the Focus tile on Home. An old pocket stopwatch whose dial is re-engraved for the
+ * Features 23 to 25: the Focus tile on Home. An old pocket stopwatch whose dial is re-engraved for the
  * length you choose, with presets, a box to type the minutes, plus and minus 5 buttons and a note of what
  * you are focusing on. Start winds it going: the hand follows the clock and the yellow wedge shrinks. The
- * timer lives on disk with an alarm, so it keeps running, and rings, with the app closed.
+ * timer lives on disk with an alarm, so it keeps running, and rings, with the app closed. While it runs the
+ * focus guard keeps the phone on Day Hub, Messages and WhatsApp; the tile offers those two, and until the
+ * guard is switched on in Android's Accessibility settings it shows how instead of the Start button.
  */
 public final class FocusTile extends HandDrawnCard {
     private static final int[] PRESETS = {15, 25, 45, 60, 90, 120};
@@ -43,6 +48,7 @@ public final class FocusTile extends HandDrawnCard {
     private final TextView intro;
     private final StopwatchView watch;
     private final LinearLayout idleGroup;
+    private final LinearLayout setupGroup;
     private final LinearLayout runGroup;
     private final HandDrawnField minutesBox;
     private final HandDrawnField labelBox;
@@ -76,8 +82,8 @@ public final class FocusTile extends HandDrawnCard {
         head.addView(stamp);
         addView(head);
 
-        intro = Sketch.label(activity, "Wind the stopwatch to a length, then start. It keeps running if you close "
-                + "Day Hub, and rings when the time is up.", 15, false, R.color.muted);
+        intro = Sketch.label(activity, "Locks your phone to Day Hub, Messages and WhatsApp until the timer ends. "
+                + "Calls still come through.", 15, false, R.color.muted);
         addView(intro, rowParams(6));
 
         watch = new StopwatchView(activity);
@@ -142,6 +148,25 @@ public final class FocusTile extends HandDrawnCard {
         start.setOnClickListener(v -> begin());
         idleGroup.addView(start, rowParams(14));
 
+        // ---- until the focus guard is on: how to turn it on ----
+        setupGroup = new LinearLayout(activity);
+        setupGroup.setOrientation(LinearLayout.VERTICAL);
+        addView(setupGroup, rowParams(12));
+        setupGroup.addView(Sketch.label(activity, "One-time setup", 17, true, R.color.ink));
+        setupGroup.addView(Sketch.label(activity, "Focus mode needs Day Hub's focus guard turned on in Android's "
+                + "Accessibility settings. It only notices which app is in front, and only while a focus timer runs. "
+                + "On Android 13 and newer, if it is greyed out: Settings, Apps, Day Hub, the three-dot menu, "
+                + "Allow restricted settings.", 15, false, R.color.muted), rowParams(6));
+        HandDrawnButton openSettings = new HandDrawnButton(activity, "Open accessibility settings", true);
+        openSettings.setOnClickListener(v -> openAccessibilitySettings());
+        setupGroup.addView(openSettings, rowParams(12));
+        HandDrawnButton turnedOn = new HandDrawnButton(activity, "I turned it on", false);
+        turnedOn.setOnClickListener(v -> {
+            refresh();
+            if (!FocusController.guardEnabled(activity)) overlays.toast("The focus guard is still off.");
+        });
+        setupGroup.addView(turnedOn, rowParams(10));
+
         // ---- while it runs: the time left, and a way to stop ----
         runGroup = new LinearLayout(activity);
         runGroup.setOrientation(LinearLayout.VERTICAL);
@@ -154,10 +179,25 @@ public final class FocusTile extends HandDrawnCard {
         runLabel = Sketch.label(activity, "", 20, false, R.color.ink);
         runLabel.setGravity(Gravity.CENTER);
         runGroup.addView(runLabel, rowParams(2));
-        TextView note = Sketch.label(activity, "It keeps running if you close Day Hub, and rings when time is up.",
-                14, false, R.color.muted);
+        TextView note = Sketch.label(activity, "Only Day Hub, Messages and WhatsApp work until the timer ends. "
+                + "Incoming calls still ring.", 14, false, R.color.muted);
         note.setGravity(Gravity.CENTER);
         runGroup.addView(note, rowParams(8));
+        LinearLayout apps = new LinearLayout(activity);
+        apps.setOrientation(LinearLayout.HORIZONTAL);
+        HandDrawnButton messages = new HandDrawnButton(activity, "Messages", false);
+        messages.setOnClickListener(v -> openAllowed(FocusAllowlist.messagesLauncher(activity), "No messages app was found on this phone."));
+        HandDrawnButton whatsapp = new HandDrawnButton(activity, "WhatsApp", false);
+        whatsapp.setOnClickListener(v -> openAllowed(FocusAllowlist.whatsAppLauncher(activity), "WhatsApp is not installed on this phone."));
+        LinearLayout.LayoutParams appGap = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        appGap.rightMargin = Sketch.dp(activity, 12);
+        apps.addView(messages, appGap);
+        apps.addView(whatsapp);
+        LinearLayout.LayoutParams appsParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        appsParams.topMargin = Sketch.dp(activity, 14);
+        runGroup.addView(apps, appsParams);
         HandDrawnButton end = new HandDrawnButton(activity, "End focus", false);
         end.setOnClickListener(v -> endEarly());
         LinearLayout.LayoutParams endParams = new LinearLayout.LayoutParams(
@@ -251,6 +291,11 @@ public final class FocusTile extends HandDrawnCard {
     /** Start was pressed: the crown dips, Android's notification question is asked once, then the timer begins. */
     private void begin() {
         if (starting || running) return;
+        if (!FocusController.guardEnabled(activity)) {
+            overlays.toast("Turn on the focus guard first.");
+            refresh();
+            return;
+        }
         starting = true;
         hideKeyboard();
         watch.press();
@@ -276,6 +321,27 @@ public final class FocusTile extends HandDrawnCard {
             overlays.toast("Notifications are off, so Day Hub cannot tell you when time is up.");
         }
         refresh();
+    }
+
+    private void openAccessibilitySettings() {
+        try {
+            activity.startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS));
+        } catch (ActivityNotFoundException e) {
+            overlays.toast("This phone has no accessibility settings screen.");
+        }
+    }
+
+    /** Messages and WhatsApp are the two apps the lock lets through. */
+    private void openAllowed(Intent launcher, String missing) {
+        if (launcher == null) {
+            overlays.toast(missing);
+            return;
+        }
+        try {
+            activity.startActivity(launcher);
+        } catch (ActivityNotFoundException e) {
+            overlays.toast(missing);
+        }
     }
 
     private void endEarly() {
@@ -312,20 +378,21 @@ public final class FocusTile extends HandDrawnCard {
             runLabel.setText(s.label);
             runLabel.setVisibility(s.label.isEmpty() ? View.GONE : View.VISIBLE);
             clockText.setText(FocusSession.clock(s.endsAt - System.currentTimeMillis()));
-            applyMode(true);
+            applyMode(true, true);
             if (isAttachedToWindow()) scheduleTick(s);
         } else {
             boolean wasRunning = running;
             running = false;
             if (wasRunning) watch.setIdle(minutes);
-            applyMode(false);
+            applyMode(false, FocusController.guardEnabled(activity));
         }
     }
 
-    private void applyMode(boolean on) {
+    private void applyMode(boolean on, boolean guardOn) {
         stamp.setVisibility(on ? View.VISIBLE : View.GONE);
         intro.setVisibility(on ? View.GONE : View.VISIBLE);
-        idleGroup.setVisibility(on ? View.GONE : View.VISIBLE);
+        idleGroup.setVisibility(!on && guardOn ? View.VISIBLE : View.GONE);
+        setupGroup.setVisibility(!on && !guardOn ? View.VISIBLE : View.GONE);
         runGroup.setVisibility(on ? View.VISIBLE : View.GONE);
         ViewGroup.LayoutParams lp = watch.getLayoutParams();
         int width = Sketch.dp(activity, on ? 210 : 260);

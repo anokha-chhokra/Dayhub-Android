@@ -12,6 +12,11 @@ import android.net.Uri;
 public final class ExternalLinks {
     private ExternalLinks() {}
 
+    /** True while a focus timer runs: other apps are off limits, so links are not opened. */
+    public static boolean blockedByFocus(Activity activity) {
+        return FocusState.isActive(activity);
+    }
+
     /** Returns false if no app could open the link. */
     public static boolean open(Activity activity, String url) {
         try {
