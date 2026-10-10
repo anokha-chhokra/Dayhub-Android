@@ -25,15 +25,17 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import app.dayhub.data.FocusSession;
+import app.dayhub.data.HoldToEnd;
 import app.dayhub.data.StopwatchMath;
 
 /**
- * Features 23 to 25: the Focus tile on Home. An old pocket stopwatch whose dial is re-engraved for the
+ * Features 23 to 26: the Focus tile on Home. An old pocket stopwatch whose dial is re-engraved for the
  * length you choose, with presets, a box to type the minutes, plus and minus 5 buttons and a note of what
  * you are focusing on. Start winds it going: the hand follows the clock and the yellow wedge shrinks. The
  * timer lives on disk with an alarm, so it keeps running, and rings, with the app closed. While it runs the
  * focus guard keeps the phone on Day Hub, Messages and WhatsApp; the tile offers those two, and until the
- * guard is switched on in Android's Accessibility settings it shows how instead of the Start button.
+ * guard is switched on in Android's Accessibility settings it shows how instead of the Start button. Ending
+ * early takes an eight second hold.
  */
 public final class FocusTile extends HandDrawnCard {
     private static final int[] PRESETS = {15, 25, 45, 60, 90, 120};
@@ -198,8 +200,11 @@ public final class FocusTile extends HandDrawnCard {
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         appsParams.topMargin = Sketch.dp(activity, 14);
         runGroup.addView(apps, appsParams);
-        HandDrawnButton end = new HandDrawnButton(activity, "End focus", false);
-        end.setOnClickListener(v -> endEarly());
+        long holdSeconds = HoldToEnd.HOLD_MS / 1000;
+        HoldButton end = new HoldButton(activity, "Hold " + holdSeconds + "s to end early");
+        end.setContentDescription("Hold for " + holdSeconds + " seconds to end focus early");
+        end.setOnHeld(this::endEarly);
+        end.setOnTap(() -> overlays.toast("Hold the button for " + holdSeconds + " seconds to end focus early."));
         LinearLayout.LayoutParams endParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         endParams.topMargin = Sketch.dp(activity, 14);

@@ -45,6 +45,7 @@ final class FocusController {
         FocusState.save(c, s);
         scheduleEnd(c, s.endsAt);
         FocusNotifications.running(c, s);
+        FocusEvents.changed();
         return s;
     }
 
@@ -89,6 +90,7 @@ final class FocusController {
         FocusState.clear(c);
         cancelEnd(c);
         FocusNotifications.finished(c, completed && was);
+        FocusEvents.changed();
     }
 
     private static PendingIntent endIntent(Context c) {

@@ -36,7 +36,7 @@ A native, offline Java app: no WebView, no network, no INTERNET permission. Tick
 - [x] 23. Old pocket-stopwatch dial that re-engraves for the chosen time, with presets, typed minutes and ±5 buttons beneath it
 - [x] 24. Timer that survives the app closing, an alarm when it ends, and a notification
 - [x] 25. Lock: an accessibility service keeps the phone on Day Hub, phone messages and WhatsApp; calls still come through
-- [ ] 26. Fallback cover overlay, and an 8-second hold to end the session early
+- [x] 26. Fallback cover overlay, and an 8-second hold to end the session early
 
 ## Widgets and reminders
 - [ ] 27. Six home-screen widgets (Home, Tasks, Habits, Spend, Quick add, Focus) that read the app's data directly

@@ -256,7 +256,9 @@ public final class SettingsScreen extends ScrollView {
         card.addView(Sketch.label(activity, "Focus mode", 22, true, R.color.ink));
         card.addView(hint("While a focus timer runs, only Day Hub, Messages and WhatsApp can be used. Anything else you "
                 + "open is sent straight back to Day Hub. Incoming calls and the notification shade still work. "
-                + "The timer always ends by itself."), rowParams(8));
+                + "If your phone will not let Day Hub jump back, a Focus mode page covers the other app instead, with "
+                + "a Back to Day Hub button. The timer always ends by itself, and holding the end button for 8 seconds "
+                + "ends it early."), rowParams(8));
         boolean guard = FocusController.guardEnabled(activity);
         card.addView(Sketch.label(activity, guard ? "✅ Focus guard is on." : "⚠️ Focus guard is off, so focus mode cannot start.",
                 16, false, R.color.ink), rowParams(12));
