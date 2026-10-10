@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/row_root" android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:orientation="horizontal" android:gravity="center_vertical" android:minHeight="48dp" android:paddingTop="2dp" android:paddingBottom="2dp">
+    <TextView android:id="@+id/habit_minus" android:layout_width="40dp" android:layout_height="40dp" android:gravity="center"
+        android:background="@drawable/chip_plain_bg" android:text="−" android:textSize="22sp" android:fontFamily="casual" android:textColor="@color/ink" />
+    <TextView android:id="@+id/habit_icon" android:layout_width="36dp" android:layout_height="wrap_content" android:gravity="center" android:textSize="20sp" />
+    <LinearLayout android:id="@+id/habit_text" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+        android:orientation="vertical" android:paddingEnd="6dp">
+        <TextView android:id="@+id/habit_title" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:textSize="15sp" android:singleLine="true" android:ellipsize="end" android:fontFamily="casual" android:textColor="@color/ink" />
+        <TextView android:id="@+id/habit_sub" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:textSize="12sp" android:singleLine="true" android:fontFamily="casual" />
+        <ProgressBar android:id="@+id/habit_bar" style="?android:attr/progressBarStyleHorizontal" android:layout_width="match_parent"
+            android:layout_height="8dp" android:layout_marginTop="2dp" android:max="100" android:progress="0" android:indeterminate="false"
+            android:progressDrawable="@drawable/bar_progress" />
+    </LinearLayout>
+    <TextView android:id="@+id/habit_plus" android:layout_width="40dp" android:layout_height="40dp" android:gravity="center"
+        android:background="@drawable/chip_bg" android:text="+" android:textSize="22sp" android:fontFamily="casual" android:textColor="@color/ink" />
+</LinearLayout>

@@ -307,16 +307,27 @@ public final class FocusTile extends HandDrawnCard {
         handler.postDelayed(this::askThenStart, 160);
     }
 
+    private boolean shouldAskNotifications() {
+        return Build.VERSION.SDK_INT >= 33 && !FocusNotifications.allowed(activity) && !FocusState.askedNotifications(activity);
+    }
+
     private void askThenStart() {
-        boolean ask = Build.VERSION.SDK_INT >= 33 && !FocusNotifications.allowed(activity)
-                && !FocusState.askedNotifications(activity);
-        if (!ask) {
+        if (!shouldAskNotifications()) {
             startNow();
             return;
         }
         FocusState.setAskedNotifications(activity);
         // The timer runs either way; the answer only decides whether Day Hub can tell you when it ends.
         results.requestPermission(Manifest.permission.POST_NOTIFICATIONS, granted -> startNow());
+    }
+
+    /** A timer started from a widget could not ask: ask once now that Day Hub is open. */
+    private void askNotificationsForWidgetStart(FocusSession s) {
+        if (starting || !shouldAskNotifications()) return;
+        FocusState.setAskedNotifications(activity);
+        results.requestPermission(Manifest.permission.POST_NOTIFICATIONS, granted -> {
+            if (granted) FocusNotifications.running(activity, s);
+        });
     }
 
     private void startNow() {
@@ -384,7 +395,10 @@ public final class FocusTile extends HandDrawnCard {
             runLabel.setVisibility(s.label.isEmpty() ? View.GONE : View.VISIBLE);
             clockText.setText(FocusSession.clock(s.endsAt - System.currentTimeMillis()));
             applyMode(true, true);
-            if (isAttachedToWindow()) scheduleTick(s);
+            if (isAttachedToWindow()) {
+                scheduleTick(s);
+                askNotificationsForWidgetStart(s);
+            }
         } else {
             boolean wasRunning = running;
             running = false;

@@ -14,4 +14,20 @@
     <string name="focus_blocks_links">Links are off while focus mode is on.</string>
     <string name="guard_label">Day Hub focus guard</string>
     <string name="guard_description">Used only while a Day Hub focus timer is running. It notices which app comes to the front so Day Hub can send you back unless it is Day Hub, Messages or WhatsApp. It cannot read what is on your screen.</string>
+    <!-- Home-screen widgets -->
+    <string name="widget_home_label">Day Hub: Home</string>
+    <string name="widget_tasks_label">Day Hub: Tasks</string>
+    <string name="widget_habits_label">Day Hub: Habits</string>
+    <string name="widget_spend_label">Day Hub: Spending</string>
+    <string name="widget_quick_label">Day Hub: Quick add</string>
+    <string name="widget_focus_label">Day Hub: Focus</string>
+    <string name="widget_home_desc">Your whole Home screen: what needs attention, tasks, habits, spending and mood.</string>
+    <string name="widget_tasks_desc">Today’s open tasks. Tap one to open Tasks.</string>
+    <string name="widget_habits_desc">Today’s habits and how far along each is.</string>
+    <string name="widget_spend_desc">This month’s spending against your budget.</string>
+    <string name="widget_quick_desc">One tap to add a task, an expense or a note.</string>
+    <string name="widget_focus_desc">Start a focus timer, or watch it count down.</string>
+    <string name="widget_tasks_title">Tasks</string>
+    <string name="widget_habits_title">Habits</string>
+    <string name="widget_open_once">Open Day Hub once to fill this widget</string>
 </resources>

@@ -12,6 +12,7 @@ import android.view.accessibility.AccessibilityManager;
 import java.util.List;
 
 import app.dayhub.data.FocusSession;
+import app.dayhub.widgets.WidgetUpdater;
 
 /**
  * Feature 24: starts and ends a focus timer. It keeps the timer on disk, sets an alarm for the moment it
@@ -45,6 +46,7 @@ final class FocusController {
         FocusState.save(c, s);
         scheduleEnd(c, s.endsAt);
         FocusNotifications.running(c, s);
+        WidgetUpdater.updateAll(c);
         FocusEvents.changed();
         return s;
     }
@@ -90,6 +92,7 @@ final class FocusController {
         FocusState.clear(c);
         cancelEnd(c);
         FocusNotifications.finished(c, completed && was);
+        WidgetUpdater.updateAll(c);
         FocusEvents.changed();
     }
 

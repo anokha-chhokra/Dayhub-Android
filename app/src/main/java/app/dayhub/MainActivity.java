@@ -7,6 +7,7 @@ import android.widget.FrameLayout;
 
 import app.dayhub.data.AutoBackup;
 import app.dayhub.data.DayHubData;
+import app.dayhub.widgets.WidgetUpdater;
 
 import java.util.function.BooleanSupplier;
 
@@ -19,6 +20,7 @@ public class MainActivity extends Activity {
     private DayHubData data;
     private BooleanSupplier backHandler;
     private AutoBackup autoBackup;
+    private final AppTargets targets = new AppTargets();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,20 +28,33 @@ public class MainActivity extends Activity {
         content = EdgeToEdgeShell.install(this);
         overlays = new Overlays(this);
         results = new ActivityResults(this);
+        if (savedInstanceState == null) targets.offer(getIntent()); // a widget may have opened us on a screen
         // Open the saved data; if it is unusable the damaged-data screen is shown instead.
         DataGate.open(this, content, overlays, results, opened -> {
             data = opened;
             // Keep the backup file current: a moment after each save, and when the app is left.
             autoBackup = new AutoBackup(opened, new BackupFileSink(new BackupFile(this, new BackupPrefs(this))),
                     new HandlerScheduler());
-            opened.setOnCommitted(autoBackup::noteChange);
+            opened.setOnCommitted(() -> {
+                autoBackup.noteChange();
+                WidgetUpdater.request(this); // the widgets read the same data
+            });
             DataTransfer transfer = new DataTransfer(this, overlays, results, opened);
             // First run: ask a few questions before showing the app.
             SetupWizard.showIfNeeded(this, content, transfer, opened, () -> {
                 shell = new ShellScreen(this, opened, overlays, results, transfer);
                 content.addView(shell);
+                targets.attach(shell);
             });
         });
+    }
+
+    /** Opened again from outside while running, e.g. by a widget tap. */
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        targets.offer(intent);
     }
 
     /** The root container that screens are added to. */
@@ -64,6 +79,7 @@ public class MainActivity extends Activity {
     protected void onStop() {
         super.onStop();
         if (autoBackup != null) autoBackup.flushNow();
+        WidgetUpdater.updateAll(this);
     }
 
     /** Coming back to the app: times and counts on Home may have moved on. */

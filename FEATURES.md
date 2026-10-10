@@ -39,7 +39,7 @@ A native, offline Java app: no WebView, no network, no INTERNET permission. Tick
 - [x] 26. Fallback cover overlay, and an 8-second hold to end the session early
 
 ## Widgets and reminders
-- [ ] 27. Six home-screen widgets (Home, Tasks, Habits, Spend, Quick add, Focus) that read the app's data directly
+- [x] 27. Six home-screen widgets (Home, Tasks, Habits, Spend, Quick add, Focus) that read the app's data directly
 - [ ] 28. Widget taps (tick a task, check a habit, add something) apply instantly
 - [ ] 29. Reminders as notifications, rescheduled after reboot and at midnight
 

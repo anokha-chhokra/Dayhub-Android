@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/root" android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical" android:background="@drawable/widget_bg" android:padding="12dp">
+    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="This month" android:textSize="13sp"
+        android:textColor="@color/muted" android:fontFamily="casual" />
+    <TextView android:id="@+id/spend_total" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:textSize="28sp" android:textStyle="bold" android:singleLine="true" android:fontFamily="casual" android:textColor="@color/ink" />
+    <TextView android:id="@+id/spend_line" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:textSize="14sp" android:singleLine="true" android:fontFamily="casual" android:textColor="@color/ink" />
+    <ProgressBar android:id="@+id/spend_bar" style="?android:attr/progressBarStyleHorizontal" android:layout_width="match_parent"
+        android:layout_height="10dp" android:layout_marginTop="6dp" android:max="100" android:progress="0" android:indeterminate="false"
+        android:progressDrawable="@drawable/bar_progress" />
+    <TextView android:id="@+id/spend_today" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp"
+        android:textSize="13sp" android:textColor="@color/muted" android:fontFamily="casual" android:singleLine="true" />
+    <FrameLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" />
+    <TextView android:id="@+id/btn_expense" android:layout_width="match_parent" android:layout_height="36dp" android:gravity="center"
+        android:background="@drawable/chip_bg" android:text="+ Expense" android:textSize="14sp" android:fontFamily="casual" android:textColor="@color/ink" />
+</LinearLayout>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/root" android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical" android:background="@drawable/widget_bg" android:padding="10dp">
+    <LinearLayout android:id="@+id/header" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="horizontal" android:gravity="center_vertical" android:paddingBottom="6dp">
+        <TextView android:id="@+id/title" android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="Tasks" android:textSize="20sp" android:textStyle="bold" android:fontFamily="casual" android:textColor="@color/ink" />
+        <TextView android:id="@+id/count" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+            android:paddingStart="8dp" android:textSize="14sp" android:textColor="@color/muted" android:fontFamily="casual" android:singleLine="true" />
+        <TextView android:id="@+id/btn_add" android:layout_width="36dp" android:layout_height="36dp" android:layout_marginStart="8dp"
+            android:gravity="center" android:background="@drawable/chip_bg" android:text="+" android:textSize="22sp" android:fontFamily="casual" android:textColor="@color/ink" />
+    </LinearLayout>
+    <FrameLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1">
+        <ListView android:id="@+id/list" android:layout_width="match_parent" android:layout_height="match_parent"
+            android:divider="@null" android:dividerHeight="0dp" />
+        <TextView android:id="@+id/empty" android:layout_width="match_parent" android:layout_height="match_parent" android:gravity="center"
+            android:text="@string/widget_open_once" android:textSize="15sp" android:fontFamily="casual" android:textColor="@color/ink" />
+    </FrameLayout>
+</LinearLayout>

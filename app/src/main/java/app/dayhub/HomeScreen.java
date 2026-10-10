@@ -103,6 +103,11 @@ public final class HomeScreen extends ScrollView {
         return lp;
     }
 
+    /** Scrolls to the Focus tile (asked for by a widget). */
+    public void scrollToFocus() {
+        post(() -> smoothScrollTo(0, focus.getTop()));
+    }
+
     // ---------- refreshing ----------
 
     /** Recomputes everything from the stored data and redraws the tiles. */

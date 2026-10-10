@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/row_root" android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:orientation="vertical" android:paddingTop="2dp" android:paddingBottom="4dp">
+    <TextView android:id="@+id/spend_total" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:textSize="22sp" android:textStyle="bold" android:singleLine="true" android:fontFamily="casual" android:textColor="@color/ink" />
+    <TextView android:id="@+id/spend_line" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:textSize="13sp" android:singleLine="true" android:fontFamily="casual" android:textColor="@color/ink" />
+    <ProgressBar android:id="@+id/spend_bar" style="?android:attr/progressBarStyleHorizontal" android:layout_width="match_parent"
+        android:layout_height="10dp" android:layout_marginTop="4dp" android:max="100" android:progress="0" android:indeterminate="false"
+        android:progressDrawable="@drawable/bar_progress" />
+    <TextView android:id="@+id/spend_today" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="2dp"
+        android:textSize="12sp" android:textColor="@color/muted" android:fontFamily="casual" android:singleLine="true" />
+</LinearLayout>

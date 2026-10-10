@@ -9,6 +9,7 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 
 import app.dayhub.data.DayHubData;
+import app.dayhub.data.Validate;
 
 /**
  * The app's main layout: a page area above a hand-drawn bottom navigation bar. Home is the real
@@ -84,6 +85,33 @@ public final class ShellScreen extends LinearLayout implements HomeScreen.Naviga
             }
         }
         overlays.toast("That screen is coming soon");
+    }
+
+    /**
+     * Opens a screen or job asked for from outside the app (a widget): a route such as "tasks", or a job:
+     * "task" (the new task sheet), "expense", "note" (a journal entry) or "focus" (Home, scrolled to Focus).
+     */
+    public void openTarget(String target) {
+        switch (target) {
+            case "task":
+                go("tasks");
+                taskActions.openSheet(null);
+                break;
+            case "expense":
+                go("spend");
+                expenseActions.openSheet(Validate.localDate());
+                break;
+            case "note":
+                go("journal");
+                journalActions.openSheet(null, Validate.localDate(), "", null);
+                break;
+            case "focus":
+                go("home");
+                if (home != null) home.scrollToFocus();
+                break;
+            default:
+                go(target);
+        }
     }
 
     /** Back from any tab other than Home returns to Home. Returns true when it was used. */
